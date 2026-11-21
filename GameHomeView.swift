@@ -26,6 +26,9 @@ struct GameHomeView: View {
     @State private var wings = "Chưa có cánh"
     @State private var pet = "Chưa có pet"
     @State private var artifact = "Chưa có bảo khí"
+    @State private var outfit = "Trang phục mặc định"
+    @State private var headwear = "Không đội mũ"
+    @State private var aura = "Không có hào quang"
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
@@ -252,7 +255,8 @@ struct GameHomeView: View {
                 shopItem("Linh Hồ", price: 150)
                 shopItem("Cửu Vĩ Thiên Hồ", price: 300)
                 shopItem("Hỏa Linh Châu", price: 130)
-                shopItem("Trấn Yêu Tháp", price: 280)                shopItem("Ngân Nguyệt Lang", price: 190)
+                shopItem("Trấn Yêu Tháp", price: 280)
+                shopItem("Ngân Nguyệt Lang", price: 190)
                 shopItem("Thanh Long", price: 420)
                 shopItem("Hỏa Phượng", price: 380)
                 shopItem("Bạch Hổ Chiến Thú", price: 350)
@@ -267,6 +271,16 @@ struct GameHomeView: View {
                 shopItem("Kim Sí Điểu", price: 330)
                 shopItem("Thái Cực Đồ", price: 390)
                 shopItem("Sinh Mệnh Chi Thụ", price: 500)
+                shopItem("Tiên Y Thanh Vân", price: 180)
+                shopItem("Chiến Bào Xích Viêm", price: 260)
+                shopItem("Dạ Hành Huyền Ảnh", price: 300)
+                shopItem("Long Thần Đế Bào", price: 650)
+                shopItem("Phượng Vũ Tiên Y", price: 580)
+                shopItem("Mũ Ngọc Vân Quan", price: 120)
+                shopItem("Mặt Nạ U Minh", price: 160)
+                shopItem("Vương Miện Thiên Đế", price: 400)
+                shopItem("Hào Quang Kim Liên", price: 220)
+                shopItem("Tinh Hà Quang Hoàn", price: 360)
             case .equipment:
                 Text("Vũ khí: \\(equippedWeapon)")
                 Text("Giáp: \\(equippedArmor)")
@@ -297,6 +311,29 @@ struct GameHomeView: View {
                 Text("Bảo khí: \\(artifact)")
                 ForEach(["Hỏa Linh Châu", "Trấn Yêu Tháp", "Thái Cực Đồ", "Sinh Mệnh Chi Thụ"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Kích hoạt \\(item)") { artifact = item } }
+                }
+            case .cosmetics:
+                Text("Ngoại trang không cộng chỉ số, chỉ thay đổi phong cách nhân vật.")
+                    .font(.caption).foregroundStyle(.gray)
+                Text("Trang phục: \\(outfit)")
+                ForEach(["Trang phục mặc định", "Tiên Y Thanh Vân", "Chiến Bào Xích Viêm", "Dạ Hành Huyền Ảnh", "Long Thần Đế Bào", "Phượng Vũ Tiên Y"], id: \\.self) { item in
+                    if item == "Trang phục mặc định" || inventory.contains(item) {
+                        Button("Mặc \\(item)") { outfit = item }
+                    }
+                }
+                Divider().overlay(.white.opacity(0.3))
+                Text("Mũ / mặt nạ: \\(headwear)")
+                ForEach(["Không đội mũ", "Mũ Ngọc Vân Quan", "Mặt Nạ U Minh", "Vương Miện Thiên Đế"], id: \\.self) { item in
+                    if item == "Không đội mũ" || inventory.contains(item) {
+                        Button("Trang bị \\(item)") { headwear = item }
+                    }
+                }
+                Divider().overlay(.white.opacity(0.3))
+                Text("Hào quang: \\(aura)")
+                ForEach(["Không có hào quang", "Hào Quang Kim Liên", "Tinh Hà Quang Hoàn"], id: \\.self) { item in
+                    if item == "Không có hào quang" || inventory.contains(item) {
+                        Button("Bật \\(item)") { aura = item }
+                    }
                 }
             case .quests:
                 Text("NPC: Trưởng lão Thanh Vân").font(.headline)
