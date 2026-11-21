@@ -117,10 +117,17 @@ struct GameHomeView: View {
                         Text("ẢI 1").font(.caption.bold()).padding(.horizontal, 12).padding(.vertical, 8)
                             .background(.purple.opacity(0.65)).clipShape(Capsule())
                     }.padding(12).background(.black.opacity(0.72)).clipShape(RoundedRectangle(cornerRadius: 14))
-                    HStack(spacing: 8) {
-                        ForEach(GamePanel.allCases) { item in
-                            Button { panel = item } label: {
-                                Text(item.rawValue).font(.caption.bold()).frame(maxWidth: .infinity).padding(.vertical, 11).background(.black.opacity(0.72)).foregroundStyle(.white).clipShape(RoundedRectangle(cornerRadius: 10))
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach([GamePanel.character, .bag, .equipment, .companions, .shop, .quests, .skills, .cosmetics]) { item in
+                                Button { panel = item } label: {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: panelIcon(item)).font(.system(size: 17, weight: .semibold))
+                                        Text(item.rawValue).font(.system(size: 10, weight: .bold))
+                                    }.frame(width: 68, height: 54)
+                                        .background(.black.opacity(0.78)).foregroundStyle(.white)
+                                        .clipShape(RoundedRectangle(cornerRadius: 11))
+                                }
                             }
                         }
                     }
@@ -184,6 +191,19 @@ struct GameHomeView: View {
         .preferredColorScheme(.dark)
     }
 
+
+    private func panelIcon(_ item: GamePanel) -> String {
+        switch item {
+        case .character: return "person.crop.circle"
+        case .bag: return "bag"
+        case .shop: return "storefront"
+        case .skills: return "sparkles"
+        case .equipment: return "shield.lefthalf.filled"
+        case .quests: return "scroll"
+        case .companions: return "pawprint"
+        case .cosmetics: return "wand.and.stars"
+        }
+    }
 
     private var monsterTitle: String {\n        switch selectedRegion {\n        case "Tân Thủ Thôn", "Thanh Vân Đại Điện": return "Khu an toàn"\n        case "Hỏa Diệm Cốc": return "Viêm Thạch Thú"\n        case "Băng Phong Cốc": return "Băng Giáp Lang"\n        case "Lạc Hà Cốc": return "Hoàng Hôn Hồ"\n        case "Yêu Thú Sâm Lâm": return "Thanh Mộc Lang"\n        case "Thiên Kiếm Di Tích": return "Kiếm Linh Cổ"\n        case "Cửu U Ma Vực": return "U Minh Ma Tướng"\n        case "Phi Thăng Tiên Giới": return "Thiên Giới Hộ Vệ"\n        default: return "Xích Giác"\n        }\n    }\n\n    func regionButton(_ name: String, detail: String, requiredLevel: Int) -> some View {\n        Button {\n            guard level >= requiredLevel else { combatMessage = "Cần đạt cấp \\(requiredLevel)"; return }\n            selectedRegion = name\n            monsterHP = 120\n            lootClaimed = false\n            combatMessage = "Đã đến \\(name), \\(monsterTitle) xuất hiện!"\n            showMap = false\n        } label: {\n            HStack {\n                VStack(alignment: .leading, spacing: 3) { Text(name).bold(); Text(detail).font(.caption2).foregroundStyle(.secondary) }\n                Spacer()\n                if level < requiredLevel { Image(systemName: "lock.fill").foregroundStyle(.orange) }\n                else if selectedRegion == name { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }\n                else { Image(systemName: "arrow.right.circle") }\n            }.padding(10).background(.black.opacity(0.25)).clipShape(RoundedRectangle(cornerRadius: 10))\n        }.buttonStyle(.plain).disabled(level < requiredLevel)\n    }\n\n    // Stage 15: automatic local save/restore.
     private var saveFingerprint: String {
