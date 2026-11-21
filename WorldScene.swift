@@ -145,17 +145,19 @@ struct WorldSceneView: UIViewRepresentable {
         var player: SCNNode?
         var body: SCNNode?
         var head: SCNNode?
+        var petNode: SCNNode?
         var isWalking = false
+        var isMounted = false
         var monster: SCNNode?
         var lastAttackPulse = 0
         var lastMonsterHit = Date.distantPast
         var lootShown = false
         var lastAppearance = ""
-        func applyAppearance(outfit: String, headwear: String, auraStyle: String, wings: String, mount: String, pet: String) {
-            let key = [outfit, headwear, auraStyle, wings, mount, pet].joined(separator: "|")
+
+        func applyAppearance(outfit: String, headwear: String, auraStyle: String, wings: String, mount: String, pet: String, mounted: Bool) {
+            let key = [outfit, headwear, auraStyle, wings, mount, pet, String(mounted)].joined(separator: "|")
             guard key != lastAppearance, let player = player else { return }
             lastAppearance = key
-            let body = player.childNode(withName: "body", recursively: true)
             let colors: [String: UIColor] = [
                 "Tiên Y Thanh Vân": UIColor(red: 0.25, green: 0.68, blue: 0.92, alpha: 1),
                 "Chiến Bào Xích Viêm": UIColor(red: 0.82, green: 0.16, blue: 0.08, alpha: 1),
@@ -163,16 +165,39 @@ struct WorldSceneView: UIViewRepresentable {
                 "Long Thần Đế Bào": UIColor(red: 0.86, green: 0.62, blue: 0.12, alpha: 1),
                 "Phượng Vũ Tiên Y": UIColor(red: 0.72, green: 0.20, blue: 0.38, alpha: 1)
             ]
-            body?.geometry?.firstMaterial?.diffuse.contents = colors[outfit] ?? UIColor(red: 0.16, green: 0.34, blue: 0.72, alpha: 1)
+            player.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = colors[outfit] ?? UIColor.systemBlue
             player.childNode(withName: "cosmeticHat", recursively: true)?.isHidden = headwear == "Không đội mũ"
             player.childNode(withName: "cosmeticMask", recursively: true)?.isHidden = headwear != "Mặt Nạ U Minh"
             player.childNode(withName: "cosmeticAura", recursively: true)?.isHidden = auraStyle == "Không có hào quang"
-            player.childNode(withName: "cosmeticWings", recursively: true)?.isHidden = wings == "Chưa có cánh"
-            player.childNode(withName: "cosmeticMount", recursively: true)?.isHidden = mount == "Chưa có thú cưỡi"
-            player.childNode(withName: "cosmeticPet", recursively: true)?.isHidden = pet == "Chưa có pet"
+            let wingRoot = player.childNode(withName: "cosmeticWings", recursively: true)
+            wingRoot?.isHidden = wings == "Chưa có cánh"
+            player.childNode(withName: "cosmeticMount", recursively: true)?.isHidden = mount == "Chưa có thú cưỡi" || !mounted
+            player.childNode(withName: "body", recursively: true)?.position.y = mounted ? 0.78 : 0.48
+            player.childNode(withName: "head", recursively: true)?.position.y = mounted ? 1.34 : 1.05
+            player.childNode(withName: "cosmeticHat", recursively: true)?.position.y = mounted ? 1.72 : 1.48
             player.childNode(withName: "cosmeticHat", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = headwear == "Vương Miện Thiên Đế" ? UIColor.systemYellow : UIColor.cyan
             player.childNode(withName: "cosmeticAura", recursively: true)?.geometry?.firstMaterial?.emission.contents = auraStyle == "Tinh Hà Quang Hoàn" ? UIColor.systemPurple : UIColor.systemYellow
-            player.childNode(withName: "cosmeticWings", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = wings == "Cửu Thiên Thần Dực" ? UIColor.systemYellow : UIColor.systemCyan
+            wingRoot?.childNodes.forEach { $0.geometry?.firstMaterial?.diffuse.contents = wings == "Cửu Thiên Thần Dực" ? UIColor.systemYellow : UIColor.systemCyan }
+            if let petNode = petNode {
+                petNode.isHidden = pet == "Chưa có pet"
+                petNode.childNode(withName: "petBody", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = pet.contains("Hồ") ? UIColor.systemOrange : UIColor.systemCyan
+            }
+            isMounted = mounted
+        }
+
+        func updatePetFollow() {
+            guard let player = player, let petNode = petNode, !petNode.isHidden else { return }
+            let target = SCNVector3(player.position.x + 0.95, 0.30, player.position.z + 0.65)
+            let dx = target.x - petNode.position.x
+            let dz = target.z - petNode.position.z
+            let distance = hypot(dx, dz)
+            if distance > 0.30 {
+                let step = min(0.075, distance)
+                petNode.position.x += dx / max(distance, 0.001) * step
+                petNode.position.z += dz / max(distance, 0.001) * step
+                petNode.eulerAngles.y = atan2(-dx, -dz)
+                petNode.position.y = 0.30 + (isWalking ? 0.08 : 0.02)
+            }
         }
     }
 
