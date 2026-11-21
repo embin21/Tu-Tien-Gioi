@@ -113,7 +113,9 @@ struct GameHomeView: View {
                     VStack(spacing: 12) {
                         HStack { Text("BẢN ĐỒ TU TIÊN").bold(); Spacer(); Button("Đóng") { showMap = false } }
                         Text("Khu vực hiện tại: \\(selectedRegion)").font(.caption).foregroundStyle(.cyan)
-                        regionButton("Thanh Vân Sơn", detail: "Khu vực khởi đầu • Cấp 1", requiredLevel: 1)
+                        regionButton("Tân Thủ Thôn", detail: "Làng khởi đầu • Khu an toàn", requiredLevel: 1)
+                        regionButton("Thanh Vân Đại Điện", detail: "Đại điện môn phái • Khu an toàn", requiredLevel: 2)
+                        regionButton("Thanh Vân Sơn", detail: "Sơn môn và bãi tu luyện • Cấp 1", requiredLevel: 1)
                         regionButton("Hỏa Diệm Cốc", detail: "Thung lũng dung nham • Cấp 3", requiredLevel: 3)
                         regionButton("Băng Phong Cốc", detail: "Thung lũng băng giá • Cấp 5", requiredLevel: 5)
                         Text("Mở khóa khu vực bằng cách tăng cấp nhân vật.").font(.caption2).foregroundStyle(.gray)
