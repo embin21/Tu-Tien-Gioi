@@ -22,6 +22,10 @@ struct GameHomeView: View {
     @State private var equippedArmor = "Áo vải"
     @State private var questKills = 0
     @State private var questClaimed = false
+    @State private var mount = "Chưa có thú cưỡi"
+    @State private var wings = "Chưa có cánh"
+    @State private var pet = "Chưa có pet"
+    @State private var artifact = "Chưa có bảo khí"
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
@@ -170,9 +174,11 @@ struct GameHomeView: View {
     }
 
     var powerScore: Int {
-        let bonus = equippedWeapon == "Kiếm linh" ? 35 : (equippedWeapon == "Kiếm sắt" ? 15 : 5)
+        let bonus = ["Hỏa Long Kiếm": 65, "Băng Phách Kiếm": 75, "Thiên Lôi Kiếm": 90, "Kiếm linh": 35, "Kiếm sắt": 15][equippedWeapon] ?? 5
         return level * 10 + bonus
     }
+
+    var companionPower: Double { (pet == "Linh Hồ" ? 8 : 0) + (artifact == "Hỏa Linh Châu" ? 12 : 0) }
 
     var defenseScore: Int {
         let bonus = equippedArmor == "Áo da" ? 15 : 5
@@ -239,6 +245,14 @@ struct GameHomeView: View {
                 shopItem("Thiên Lôi Kiếm", price: 200)
                 shopItem("Long Lân Giáp", price: 160)
                 shopItem("Huyền Vũ Giáp", price: 220)
+                shopItem("Thanh Vân Hạc", price: 120)
+                shopItem("Tử Kim Kỳ Lân", price: 260)
+                shopItem("Phong Vũ Chi Dực", price: 180)
+                shopItem("Phượng Hoàng Thần Dực", price: 320)
+                shopItem("Linh Hồ", price: 150)
+                shopItem("Cửu Vĩ Thiên Hồ", price: 300)
+                shopItem("Hỏa Linh Châu", price: 130)
+                shopItem("Trấn Yêu Tháp", price: 280)
             case .equipment:
                 Text("Vũ khí: \\(equippedWeapon)")
                 Text("Giáp: \\(equippedArmor)")
