@@ -32,6 +32,7 @@ struct GameHomeView: View {
     @State private var aura = "Không có hào quang"
     @State private var isRestoringSave = false
     @State private var saveStatus = "Chưa lưu"
+    @AppStorage("ttg_region_stage16") private var selectedRegion = "Thanh Vân Sơn"
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
@@ -61,8 +62,8 @@ struct GameHomeView: View {
                     }
                     HStack(spacing: 8) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("XÍCH GIÁC").font(.caption.bold())
-                            Text(combatMessage).font(.system(size: 9))
+                            Text(monsterTitle.uppercased()).font(.caption.bold())
+                            Text("\(selectedRegion) • \(combatMessage)").font(.system(size: 9))
                             meter("HP", value: monsterHP / 120, color: .orange)
                         }
                         Spacer()
@@ -109,14 +110,14 @@ struct GameHomeView: View {
                     panelView(panel).padding(20).transition(.scale.combined(with: .opacity))
                 }
                 if showMap {
-                    VStack {
-                        HStack { Text("BẢN ĐỒ KHU VỰC").bold(); Spacer(); Button("Đóng") { showMap = false } }
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12).fill(Color(red: 0.16, green: 0.24, blue: 0.22))
-                            Image(systemName: "location.fill").font(.largeTitle).foregroundStyle(.orange)
-                            Text("Thanh Vân Sơn").font(.caption).foregroundStyle(.white).offset(y: 52)
-                        }.frame(height: 210)
-                    }.padding(18).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 18)).padding(34)
+                    VStack(spacing: 12) {
+                        HStack { Text("BẢN ĐỒ TU TIÊN").bold(); Spacer(); Button("Đóng") { showMap = false } }
+                        Text("Khu vực hiện tại: \\(selectedRegion)").font(.caption).foregroundStyle(.cyan)
+                        regionButton("Thanh Vân Sơn", detail: "Khu vực khởi đầu • Cấp 1", requiredLevel: 1)
+                        regionButton("Hỏa Diệm Cốc", detail: "Thung lũng dung nham • Cấp 3", requiredLevel: 3)
+                        regionButton("Băng Phong Cốc", detail: "Thung lũng băng giá • Cấp 5", requiredLevel: 5)
+                        Text("Mở khóa khu vực bằng cách tăng cấp nhân vật.").font(.caption2).foregroundStyle(.gray)
+                    }.padding(18).frame(maxWidth: 330).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 18)).padding(24)
                 }
             }
         }
@@ -132,7 +133,7 @@ struct GameHomeView: View {
     }
 
 
-    // Stage 15: automatic local save/restore.
+    private var monsterTitle: String {\n        switch selectedRegion {\n        case "Hỏa Diệm Cốc": return "Viêm Thạch Thú"\n        case "Băng Phong Cốc": return "Băng Giáp Lang"\n        default: return "Xích Giác"\n        }\n    }\n\n    func regionButton(_ name: String, detail: String, requiredLevel: Int) -> some View {\n        Button {\n            guard level >= requiredLevel else { combatMessage = "Cần đạt cấp \\(requiredLevel)"; return }\n            selectedRegion = name\n            monsterHP = 120\n            lootClaimed = false\n            combatMessage = "Đã đến \\(name), \\(monsterTitle) xuất hiện!"\n            showMap = false\n        } label: {\n            HStack {\n                VStack(alignment: .leading, spacing: 3) { Text(name).bold(); Text(detail).font(.caption2).foregroundStyle(.secondary) }\n                Spacer()\n                if level < requiredLevel { Image(systemName: "lock.fill").foregroundStyle(.orange) }\n                else if selectedRegion == name { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }\n                else { Image(systemName: "arrow.right.circle") }\n            }.padding(10).background(.black.opacity(0.25)).clipShape(RoundedRectangle(cornerRadius: 10))\n        }.buttonStyle(.plain).disabled(level < requiredLevel)\n    }\n\n    // Stage 15: automatic local save/restore.
     private var saveFingerprint: String {
         [
             String(hp), String(mana), String(monsterHP), String(exp), String(level),
