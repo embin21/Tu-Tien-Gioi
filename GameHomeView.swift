@@ -225,22 +225,35 @@ struct GameHomeView: View {
     }
 
     func skillButton(_ symbol: String, title: String) -> some View {
-        Button {
-            let stats: (Double, Double)
-            switch title {
-            case "Đánh": stats = (15, 0)
-            case "Kỹ năng 1": stats = (30, 10)
-            case "Kỹ năng 2": stats = (25, 10)
-            case "Kỹ năng 3": stats = (20, 8)
-            default: stats = (40, 15)
-            }
-            attackMonster(damage: stats.0 + Double(powerScore) * 0.15 + companionPower, manaCost: stats.1)
+        let skill = classSkill(for: title)
+        return Button {
+            attackMonster(damage: skill.damage + Double(powerScore) * 0.15 + companionPower, manaCost: skill.mana)
+            if monsterHP > 0 { combatMessage = "\(skill.name)! " + combatMessage }
         } label: {
             VStack(spacing: 2) {
                 Text(symbol).font(.title2)
-                Text(title).font(.system(size: 8, weight: .bold))
+                Text(skill.shortName).font(.system(size: 8, weight: .bold))
             }.frame(width: 54, height: 54).background(.black.opacity(0.76)).clipShape(Circle()).overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 1))
         }.foregroundStyle(.white)
+    }
+
+    func classSkill(for slot: String) -> (name: String, shortName: String, damage: Double, mana: Double) {
+        let index = ["Kỹ năng 1": 0, "Kỹ năng 2": 1, "Kỹ năng 3": 2, "Kỹ năng 4": 3][slot] ?? -1
+        if slot == "Đánh" { return ("Đánh thường", "Đánh", 15, 0) }
+        let skills: [(String, String, Double, Double)]
+        switch profile.sect {
+        case "Kiếm Tông":
+            skills = [("Kiếm Khí Trảm", "Kiếm khí", 34, 10), ("Liên Hoàn Kiếm", "Liên kích", 29, 12), ("Kiếm Tâm Hộ Thể", "Hộ thể", 23, 8), ("Vạn Kiếm Quy Tông", "Vạn kiếm", 52, 20)]
+        case "Linh Tông":
+            skills = [("Hỏa Cầu Thuật", "Hỏa cầu", 39, 13), ("Băng Tiễn", "Băng tiễn", 34, 12), ("Lôi Ấn", "Lôi ấn", 43, 16), ("Tinh Hà Bạo", "Tinh hà", 56, 24)]
+        case "Võ Tông":
+            skills = [("Băng Sơn Quyền", "Trọng quyền", 37, 9), ("Thiết Bố Sam", "Thiết thân", 25, 7), ("Chấn Địa Kích", "Chấn địa", 42, 13), ("Long Tượng Bá Thể", "Bá thể", 55, 21)]
+        default:
+            skills = [("Ảnh Trảm", "Ảnh trảm", 36, 10), ("Mê Tung Bộ", "Mê tung", 28, 8), ("Phân Thân Kích", "Phân thân", 41, 14), ("Vô Ảnh Sát", "Vô ảnh", 58, 22)]
+        }
+        guard skills.indices.contains(index) else { return ("Kỹ năng", "Chiêu", 20, 8) }
+        let item = skills[index]
+        return (item.0, item.1, item.2, item.3)
     }
 
     func attackMonster(damage: Double, manaCost: Double) {
@@ -447,8 +460,17 @@ struct GameHomeView: View {
                     Text("Hãy đánh bại thêm \\(3 - min(questKills, 3)) quái để nhận thưởng.")
                 }
             case .skills:
-                Text("Đánh thường  •  Kiếm khí  •  Hộ thể  •  Phi hành")
-                Text("Kỹ năng hiện là giao diện mẫu.")
+                Text("Hệ phái: \(profile.sect)").font(.headline)
+                Text("Bộ kỹ năng riêng của lớp nhân vật").font(.caption).foregroundStyle(.cyan)
+                ForEach(["Kỹ năng 1", "Kỹ năng 2", "Kỹ năng 3", "Kỹ năng 4"], id: \\.self) { slot in
+                    let skill = classSkill(for: slot)
+                    HStack {
+                        Text(skill.name).bold()
+                        Spacer()
+                        Text("ST: \(Int(skill.damage)) • MP: \(Int(skill.mana))").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                Text("Chạm các nút kỹ năng trong trận đấu để sử dụng.").font(.caption2)
             }
         }.foregroundStyle(.white).padding(18).frame(maxWidth: 330).background(Color.black.opacity(0.88)).clipShape(RoundedRectangle(cornerRadius: 18)).overlay(RoundedRectangle(cornerRadius: 18).stroke(.orange.opacity(0.7), lineWidth: 1))
     }
