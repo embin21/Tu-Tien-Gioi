@@ -4,6 +4,7 @@ import SceneKit
 struct WorldSceneView: UIViewRepresentable {
     @Binding var moveX: CGFloat
     @Binding var moveY: CGFloat
+    @Binding var attackPulse: Int
 
     func makeUIView(context: Context) -> SCNView {
         let view = SCNView()
@@ -16,6 +17,11 @@ struct WorldSceneView: UIViewRepresentable {
 
         scene.rootNode.addChildNode(makeGround())
         addWorld(to: scene.rootNode)
+        let monster = makeMonster()
+        monster.name = "monster"
+        monster.position = SCNVector3(2.2, 0, -1.8)
+        scene.rootNode.addChildNode(monster)
+        monster.runAction(.repeatForever(.sequence([.moveBy(x: 0, y: 0.10, z: 0, duration: 0.8), .moveBy(x: 0, y: -0.10, z: 0, duration: 0.8)])))
 
         let player = makePlayer()
         player.name = "player"
@@ -48,11 +54,20 @@ struct WorldSceneView: UIViewRepresentable {
         context.coordinator.player = player
         context.coordinator.body = player.childNode(withName: "body", recursively: true)
         context.coordinator.head = player.childNode(withName: "head", recursively: true)
+        context.coordinator.monster = monster
         return view
     }
 
     func updateUIView(_ uiView: SCNView, context: Context) {
         guard let player = context.coordinator.player else { return }
+        if attackPulse != context.coordinator.lastAttackPulse {
+            context.coordinator.lastAttackPulse = attackPulse
+            if let monster = context.coordinator.monster {
+                monster.runAction(.sequence([.scale(to: 1.12, duration: 0.08), .scale(to: 1.0, duration: 0.12)]), forKey: "hit")
+                monster.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.emission.contents = UIColor.red
+                monster.runAction(.sequence([.wait(duration: 0.16), .run { node in node.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.emission.contents = UIColor.black }]), forKey: "flash")
+            }
+        }
         let input = hypot(moveX, moveY)
         if input > 0.08 {
             let speed: Float = 0.105
@@ -84,6 +99,8 @@ struct WorldSceneView: UIViewRepresentable {
         var body: SCNNode?
         var head: SCNNode?
         var isWalking = false
+        var monster: SCNNode?
+        var lastAttackPulse = 0
     }
 
     private func material(_ color: UIColor, roughness: CGFloat = 0.85, emission: UIColor? = nil) -> SCNMaterial {
@@ -148,6 +165,57 @@ struct WorldSceneView: UIViewRepresentable {
         auraNode.eulerAngles.x = -.pi / 2
         auraNode.position.y = 0.03
         root.addChildNode(auraNode)
+        return root
+    }
+
+
+    private func makeMonster() -> SCNNode {
+        let root = SCNNode()
+        let red = UIColor(red: 0.72, green: 0.16, blue: 0.12, alpha: 1)
+        let dark = UIColor(red: 0.22, green: 0.10, blue: 0.10, alpha: 1)
+        let gold = UIColor(red: 1.0, green: 0.72, blue: 0.22, alpha: 1)
+        let body = SCNSphere(radius: 0.52)
+        body.firstMaterial = material(red, roughness: 0.72)
+        let bodyNode = SCNNode(geometry: body)
+        bodyNode.name = "body"
+        bodyNode.scale = SCNVector3(1.0, 0.92, 0.78)
+        bodyNode.position.y = 0.58
+        root.addChildNode(bodyNode)
+        let head = SCNSphere(radius: 0.36)
+        head.firstMaterial = material(red)
+        let headNode = SCNNode(geometry: head)
+        headNode.name = "head"
+        headNode.position = SCNVector3(0, 1.18, 0.22)
+        root.addChildNode(headNode)
+        for side in [-1, 1] {
+            let horn = SCNCone(topRadius: 0.015, bottomRadius: 0.12, height: 0.48)
+            horn.firstMaterial = material(gold, roughness: 0.35, emission: gold)
+            let h = SCNNode(geometry: horn)
+            h.position = SCNVector3(Float(side) * 0.27, 1.48, 0.18)
+            h.eulerAngles.z = Float(side) * -0.55
+            root.addChildNode(h)
+            let eye = SCNSphere(radius: 0.055)
+            eye.firstMaterial = material(.yellow, roughness: 0.25, emission: .yellow)
+            let e = SCNNode(geometry: eye)
+            e.position = SCNVector3(Float(side) * 0.15, 1.22, 0.53)
+            root.addChildNode(e)
+            let leg = SCNCapsule(capRadius: 0.10, height: 0.42)
+            leg.firstMaterial = material(dark)
+            let l = SCNNode(geometry: leg)
+            l.position = SCNVector3(Float(side) * 0.25, 0.20, 0)
+            root.addChildNode(l)
+        }
+        let snout = SCNSphere(radius: 0.13)
+        snout.firstMaterial = material(UIColor(red: 0.95, green: 0.48, blue: 0.38, alpha: 1))
+        let snoutNode = SCNNode(geometry: snout)
+        snoutNode.position = SCNVector3(0, 1.08, 0.52)
+        root.addChildNode(snoutNode)
+        let ring = SCNTorus(ringRadius: 0.62, pipeRadius: 0.025)
+        ring.firstMaterial = material(.orange, roughness: 0.3, emission: .orange)
+        let aura = SCNNode(geometry: ring)
+        aura.eulerAngles.x = -.pi / 2
+        aura.position.y = 0.035
+        root.addChildNode(aura)
         return root
     }
 
