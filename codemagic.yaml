@@ -1,1 +1,26 @@
 
+
+workflows:
+  ios-ipa:
+    name: Tu Tien Gioi - iOS IPA
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: AppStoreConnect
+    environment:
+      xcode: latest
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.embin21.tutiengioi
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+      - name: Generate Xcode project
+        script: xcodegen generate --spec project.yml
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Build IPA
+        script: xcode-project build-ipa --project "TuTienGioi.xcodeproj" --scheme "TuTienGioi"
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
