@@ -229,85 +229,71 @@ struct WorldSceneView: UIViewRepresentable {
 
     private func makePlayer() -> SCNNode {
         let root = SCNNode()
-
-        let robe = SCNCapsule(capRadius: 0.32, height: 0.78)
+        let robe = SCNCapsule(capRadius: 0.30, height: 0.78)
         robe.firstMaterial = material(UIColor(red: 0.16, green: 0.34, blue: 0.72, alpha: 1), roughness: 0.62)
-        let body = SCNNode(geometry: robe)
-        body.name = "body"
-        body.position.y = 0.48
-        root.addChildNode(body)
+        let body = SCNNode(geometry: robe); body.name = "body"; body.position.y = 0.48; root.addChildNode(body)
 
-        let head = SCNSphere(radius: 0.30)
-        head.firstMaterial = material(UIColor(red: 1.0, green: 0.78, blue: 0.62, alpha: 1))
-        let headNode = SCNNode(geometry: head)
-        headNode.name = "head"
-        headNode.position.y = 1.05
-        root.addChildNode(headNode)
+        let head = SCNSphere(radius: 0.29); head.firstMaterial = material(UIColor(red: 1, green: 0.78, blue: 0.64, alpha: 1))
+        let headNode = SCNNode(geometry: head); headNode.name = "head"; headNode.position.y = 1.05; root.addChildNode(headNode)
+        let hair = SCNSphere(radius: 0.31); hair.firstMaterial = material(UIColor(white: 0.10, alpha: 1))
+        let hairNode = SCNNode(geometry: hair); hairNode.position = SCNVector3(0, 1.20, -0.045); hairNode.scale = SCNVector3(1, 0.72, 1); root.addChildNode(hairNode)
 
-        let hair = SCNSphere(radius: 0.31)
-        hair.firstMaterial = material(UIColor(white: 0.12, alpha: 1))
-        let hairNode = SCNNode(geometry: hair)
-        hairNode.position = SCNVector3(0, 1.20, -0.04)
-        root.addChildNode(hairNode)
+        for side in [-1, 1] {
+            let eye = SCNSphere(radius: 0.035); eye.firstMaterial = material(.black)
+            let eyeNode = SCNNode(geometry: eye); eyeNode.position = SCNVector3(Float(side) * 0.105, 1.07, 0.265); root.addChildNode(eyeNode)
+            let sleeve = SCNCapsule(capRadius: 0.105, height: 0.48); sleeve.firstMaterial = material(UIColor(red: 0.12, green: 0.28, blue: 0.62, alpha: 1))
+            let arm = SCNNode(geometry: sleeve); arm.position = SCNVector3(Float(side) * 0.34, 0.55, 0); arm.eulerAngles.z = Float(side) * -0.22; root.addChildNode(arm)
+            let hand = SCNSphere(radius: 0.095); hand.firstMaterial = material(UIColor(red: 1, green: 0.78, blue: 0.64, alpha: 1))
+            let handNode = SCNNode(geometry: hand); handNode.position = SCNVector3(Float(side) * 0.38, 0.30, 0.02); root.addChildNode(handNode)
+            let leg = SCNCapsule(capRadius: 0.12, height: 0.42); leg.firstMaterial = material(UIColor(red: 0.12, green: 0.16, blue: 0.28, alpha: 1))
+            let legNode = SCNNode(geometry: leg); legNode.position = SCNVector3(Float(side) * 0.15, 0.10, 0); root.addChildNode(legNode)
+            let boot = SCNBox(width: 0.22, height: 0.13, length: 0.30, chamferRadius: 0.05); boot.firstMaterial = material(UIColor(red: 0.34, green: 0.18, blue: 0.10, alpha: 1))
+            let bootNode = SCNNode(geometry: boot); bootNode.position = SCNVector3(Float(side) * 0.15, -0.10, 0.06); root.addChildNode(bootNode)
+        }
+        let collar = SCNTorus(ringRadius: 0.19, pipeRadius: 0.05); collar.firstMaterial = material(.systemYellow)
+        let collarNode = SCNNode(geometry: collar); collarNode.position.y = 0.79; collarNode.eulerAngles.x = .pi / 2; root.addChildNode(collarNode)
+        let belt = SCNTorus(ringRadius: 0.30, pipeRadius: 0.045); belt.firstMaterial = material(.systemYellow)
+        let beltNode = SCNNode(geometry: belt); beltNode.position.y = 0.55; beltNode.eulerAngles.x = .pi / 2; root.addChildNode(beltNode)
+        let sword = SCNBox(width: 0.055, height: 0.78, length: 0.09, chamferRadius: 0.02); sword.firstMaterial = material(.cyan, roughness: 0.25, emission: .cyan)
+        let swordNode = SCNNode(geometry: sword); swordNode.position = SCNVector3(0.47, 0.48, -0.05); root.addChildNode(swordNode)
 
-        let belt = SCNTorus(ringRadius: 0.30, pipeRadius: 0.045)
-        belt.firstMaterial = material(UIColor(red: 0.92, green: 0.68, blue: 0.20, alpha: 1), roughness: 0.4)
-        let beltNode = SCNNode(geometry: belt)
-        beltNode.position.y = 0.55
-        beltNode.eulerAngles.x = .pi / 2
-        root.addChildNode(beltNode)
+        let aura = SCNTorus(ringRadius: 0.52, pipeRadius: 0.025); aura.firstMaterial = material(.cyan, roughness: 0.3, emission: .cyan)
+        let auraNode = SCNNode(geometry: aura); auraNode.name = "cosmeticAura"; auraNode.eulerAngles.x = -.pi / 2; auraNode.position.y = 0.03; root.addChildNode(auraNode)
+        let crown = SCNPyramid(width: 0.48, height: 0.30, length: 0.38); crown.firstMaterial = material(.systemYellow, roughness: 0.35, emission: .yellow)
+        let crownNode = SCNNode(geometry: crown); crownNode.name = "cosmeticHat"; crownNode.position = SCNVector3(0, 1.48, 0); crownNode.isHidden = true; root.addChildNode(crownNode)
+        let mask = SCNBox(width: 0.38, height: 0.16, length: 0.08, chamferRadius: 0.06); mask.firstMaterial = material(.black)
+        let maskNode = SCNNode(geometry: mask); maskNode.name = "cosmeticMask"; maskNode.position = SCNVector3(0, 0.99, 0.27); maskNode.isHidden = true; root.addChildNode(maskNode)
 
-        let aura = SCNTorus(ringRadius: 0.52, pipeRadius: 0.025)
-        aura.firstMaterial = material(.cyan, roughness: 0.3, emission: .cyan)
-        let auraNode = SCNNode(geometry: aura)
-        auraNode.name = "cosmeticAura"
-        auraNode.eulerAngles.x = -.pi / 2
-        auraNode.position.y = 0.03
-        root.addChildNode(auraNode)
+        let wingsRoot = SCNNode(); wingsRoot.name = "cosmeticWings"; wingsRoot.isHidden = true; root.addChildNode(wingsRoot)
+        for side in [-1, 1] {
+            let wingGeo = SCNPlane(width: 0.62, height: 0.86); wingGeo.firstMaterial = material(.cyan, roughness: 0.35, emission: .cyan)
+            let wing = SCNNode(geometry: wingGeo); wing.name = "wing_\(side)"
+            wing.position = SCNVector3(Float(side) * 0.34, 0.88, -0.28)
+            wing.eulerAngles.y = Float(side) * -0.35
+            wing.eulerAngles.z = Float(side) * -0.18
+            wingsRoot.addChildNode(wing)
+            wing.runAction(.repeatForever(.autoreverses(.rotateBy(x: 0, y: 0, z: Float(side) * 0.62, duration: 0.42))), forKey: "wingFlap")
+        }
 
-        let crown = SCNPyramid(width: 0.48, height: 0.30, length: 0.38)
-        crown.firstMaterial = material(.systemYellow, roughness: 0.35, emission: .yellow)
-        let crownNode = SCNNode(geometry: crown)
-        crownNode.name = "cosmeticHat"
-        crownNode.position = SCNVector3(0, 1.48, 0)
-        crownNode.isHidden = true
-        root.addChildNode(crownNode)
+        let mountRoot = SCNNode(); mountRoot.name = "cosmeticMount"; mountRoot.isHidden = true; root.addChildNode(mountRoot)
+        let mountBody = SCNSphere(radius: 0.48); mountBody.firstMaterial = material(UIColor(red: 0.62, green: 0.52, blue: 0.36, alpha: 1))
+        let mountBodyNode = SCNNode(geometry: mountBody); mountBodyNode.position = SCNVector3(0, 0.30, 0.16); mountBodyNode.scale = SCNVector3(1.3, 0.8, 1.55); mountRoot.addChildNode(mountBodyNode)
+        let mountHead = SCNSphere(radius: 0.23); mountHead.firstMaterial = material(UIColor(red: 0.72, green: 0.60, blue: 0.43, alpha: 1))
+        let mountHeadNode = SCNNode(geometry: mountHead); mountHeadNode.position = SCNVector3(0, 0.58, 0.70); mountRoot.addChildNode(mountHeadNode)
+        for side in [-1, 1] {
+            let legGeo = SCNCapsule(capRadius: 0.09, height: 0.45); legGeo.firstMaterial = material(UIColor(red: 0.38, green: 0.30, blue: 0.22, alpha: 1))
+            let legNode = SCNNode(geometry: legGeo); legNode.position = SCNVector3(Float(side) * 0.28, 0.04, Float(side) * 0.12); mountRoot.addChildNode(legNode)
+        }
+        mountRoot.runAction(.repeatForever(.sequence([.moveBy(x: 0, y: 0.045, z: 0, duration: 0.35), .moveBy(x: 0, y: -0.045, z: 0, duration: 0.35)])), forKey: "mountIdle")
 
-        let mask = SCNBox(width: 0.38, height: 0.16, length: 0.08, chamferRadius: 0.06)
-        mask.firstMaterial = material(.black, roughness: 0.4)
-        let maskNode = SCNNode(geometry: mask)
-        maskNode.name = "cosmeticMask"
-        maskNode.position = SCNVector3(0, 0.99, 0.27)
-        maskNode.isHidden = true
-        root.addChildNode(maskNode)
-
-        let wingGeometry = SCNPlane(width: 0.68, height: 0.90)
-        wingGeometry.firstMaterial = material(.cyan, roughness: 0.4, emission: .cyan)
-        let wingNode = SCNNode(geometry: wingGeometry)
-        wingNode.name = "cosmeticWings"
-        wingNode.position = SCNVector3(0, 0.88, -0.28)
-        wingNode.isHidden = true
-        root.addChildNode(wingNode)
-
-        let mountGeometry = SCNSphere(radius: 0.48)
-        mountGeometry.firstMaterial = material(UIColor(red: 0.62, green: 0.52, blue: 0.36, alpha: 1))
-        let mountNode = SCNNode(geometry: mountGeometry)
-        mountNode.name = "cosmeticMount"
-        mountNode.scale = SCNVector3(1.25, 0.65, 1.45)
-        mountNode.position = SCNVector3(0, 0.30, 0.15)
-        mountNode.isHidden = true
-        root.addChildNode(mountNode)
-
-        let petGeometry = SCNSphere(radius: 0.20)
-        petGeometry.firstMaterial = material(.systemOrange, roughness: 0.5, emission: .orange)
-        let petNode = SCNNode(geometry: petGeometry)
-        petNode.name = "cosmeticPet"
-        petNode.position = SCNVector3(0.85, 0.32, 0.45)
-        petNode.isHidden = true
-        root.addChildNode(petNode)
+        let petRoot = SCNNode(); petRoot.name = "petRoot"
+        let petBody = SCNSphere(radius: 0.19); petBody.firstMaterial = material(.systemOrange, roughness: 0.5, emission: .orange)
+        let petBodyNode = SCNNode(geometry: petBody); petBodyNode.name = "petBody"; petRoot.addChildNode(petBodyNode)
+        let petHead = SCNSphere(radius: 0.13); petHead.firstMaterial = material(.systemOrange)
+        let petHeadNode = SCNNode(geometry: petHead); petHeadNode.position = SCNVector3(0, 0.12, 0.19); petRoot.addChildNode(petHeadNode)
+        petRoot.position = SCNVector3(0.95, 0.30, 0.65); root.addChildNode(petRoot)
         return root
     }
-
 
     private func makeMonster() -> SCNNode {
         let root = SCNNode()
