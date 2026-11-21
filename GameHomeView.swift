@@ -8,6 +8,10 @@ struct GameHomeView: View {
     @State private var hp = 100.0
     @State private var mana = 80.0
     @State private var showMap = false
+    @State private var monsterHP = 120.0
+    @State private var exp = 0
+    @State private var level = 1
+    @State private var combatMessage = "Xích Giác xuất hiện!"
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
            let p = try? JSONDecoder().decode(PlayerProfile.self, from: data) { return p }
@@ -21,7 +25,7 @@ struct GameHomeView: View {
                 VStack {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(profile.name)  •  Lv.1").font(.headline)
+                            Text("\(profile.name)  •  Lv.\(level)").font(.headline)
                             meter("HP", value: hp / 100, color: .red)
                             meter("MP", value: mana / 100, color: .blue)
                         }.padding(10).background(.black.opacity(0.62)).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -34,6 +38,18 @@ struct GameHomeView: View {
                             }.frame(width: 64, height: 64)
                         }
                     }
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("XÍCH GIÁC").font(.caption.bold())
+                            Text(combatMessage).font(.system(size: 9))
+                            meter("HP", value: monsterHP / 120, color: .orange)
+                        }
+                        Spacer()
+                        if monsterHP <= 0 {
+                            Button("Hồi sinh quái") { respawnMonster() }
+                                .font(.caption.bold()).padding(8).background(.black.opacity(0.7)).clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                    }.padding(9).background(.black.opacity(0.65)).clipShape(RoundedRectangle(cornerRadius: 10))
                     Spacer()
                     HStack(alignment: .bottom) {
                         JoystickView(x: $moveX, y: $moveY).frame(width: 132, height: 132)
@@ -89,14 +105,44 @@ struct GameHomeView: View {
 
     func skillButton(_ symbol: String, title: String) -> some View {
         Button {
-            if title == "Đánh" { hp = max(0, hp - 1) }
-            else { mana = max(0, mana - 5) }
+            let stats: (Double, Double)
+            switch title {
+            case "Đánh": stats = (15, 0)
+            case "Kỹ năng 1": stats = (30, 10)
+            case "Kỹ năng 2": stats = (25, 10)
+            case "Kỹ năng 3": stats = (20, 8)
+            default: stats = (40, 15)
+            }
+            attackMonster(damage: stats.0, manaCost: stats.1)
         } label: {
             VStack(spacing: 2) {
                 Text(symbol).font(.title2)
                 Text(title).font(.system(size: 8, weight: .bold))
             }.frame(width: 54, height: 54).background(.black.opacity(0.76)).clipShape(Circle()).overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 1))
         }.foregroundStyle(.white)
+    }
+
+    func attackMonster(damage: Double, manaCost: Double) {
+        guard monsterHP > 0 else { combatMessage = "Quái đã bị đánh bại"; return }
+        guard mana >= manaCost else { combatMessage = "Không đủ MP"; return }
+        mana -= manaCost
+        monsterHP = max(0, monsterHP - damage)
+        if monsterHP == 0 {
+            exp += 30
+            combatMessage = "Hạ quái! +30 EXP"
+            if exp >= level * 100 {
+                exp -= level * 100
+                level += 1
+                combatMessage = "Lên cấp! Lv.\\(level)"
+            }
+        } else {
+            combatMessage = "Gây \\(Int(damage)) sát thương"
+        }
+    }
+
+    func respawnMonster() {
+        monsterHP = 120
+        combatMessage = "Xích Giác đã hồi sinh"
     }
 
     @ViewBuilder func panelView(_ item: GamePanel) -> some View {
@@ -106,7 +152,7 @@ struct GameHomeView: View {
             case .character:
                 Text("⚔️  \(profile.name)").font(.title3.bold())
                 Text("Môn phái: \(profile.sect)  •  Giới tính: \(profile.gender)")
-                Text("Cấp độ: 1  •  Tu vi: Luyện Khí sơ kỳ")
+                Text("Cấp độ: \\(level)  •  EXP: \\(exp)/\\(level * 100)")
             case .bag:
                 Text("Túi đồ (0/40)").font(.headline)
                 Text("Chưa có vật phẩm. Vật phẩm nhặt được sẽ xuất hiện tại đây.")
