@@ -73,4 +73,10 @@ struct GameSave: Codable {
     var guildContribution: Int? = nil
     var guildKills: Int? = nil
     var guildTaskClaimed: Bool? = nil
+    var mountLevel: Int? = nil
+    var mountExp: Int? = nil
+    var wingLevel: Int? = nil
+    var wingExp: Int? = nil
+    var petLevel: Int? = nil
+    var petExp: Int? = nil
 }
