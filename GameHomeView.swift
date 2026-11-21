@@ -18,6 +18,8 @@ struct GameHomeView: View {
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
     @State private var realmIndex = 0
+    @State private var equippedWeapon = "Kiếm gỗ"
+    @State private var equippedArmor = "Áo vải"
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
@@ -164,6 +166,30 @@ struct GameHomeView: View {
         }
     }
 
+    var powerScore: Int {
+        let bonus = equippedWeapon == "Kiếm linh" ? 35 : (equippedWeapon == "Kiếm sắt" ? 15 : 5)
+        return level * 10 + bonus
+    }
+
+    var defenseScore: Int {
+        let bonus = equippedArmor == "Áo da" ? 15 : 5
+        return level * 5 + bonus
+    }
+
+    @ViewBuilder func shopItem(_ name: String, price: Int) -> some View {
+        HStack {
+            VStack(alignment: .leading) { Text(name).bold(); Text("Giá: \\(price) linh thạch").font(.caption) }
+            Spacer()
+            if inventory.contains(name) { Text("Đã sở hữu").font(.caption).foregroundStyle(.green) }
+            else { Button("Mua") {
+                guard currency >= price else { combatMessage = "Không đủ linh thạch"; return }
+                currency -= price
+                inventory.append(name)
+                combatMessage = "Đã mua \\(name)"
+            }.disabled(currency < price) }
+        }
+    }
+
     func breakthrough() {
         guard exp >= 100, realmIndex < realms.count - 1 else { return }
         exp -= 100
@@ -201,8 +227,21 @@ struct GameHomeView: View {
                     }
                 }
             case .shop:
-                Text("Tiền: 0  •  Linh thạch: \\(currency)")
-                Text("Shop đang chờ kết nối dữ liệu vật phẩm.")
+                Text("Linh thạch: \\(currency)")
+                shopItem("Kiếm sắt", price: 20)
+                shopItem("Áo da", price: 15)
+                shopItem("Kiếm linh", price: 50)
+            case .equipment:
+                Text("Vũ khí: \\(equippedWeapon)")
+                Text("Giáp: \\(equippedArmor)")
+                Text("Sức mạnh: \\(powerScore)")
+                Text("Phòng thủ: \\(defenseScore)")
+                ForEach(["Kiếm gỗ", "Kiếm sắt", "Kiếm linh"], id: \\.self) { item in
+                    if inventory.contains(item) { Button("Trang bị \\(item)") { equippedWeapon = item } }
+                }
+                ForEach(["Áo vải", "Áo da"], id: \\.self) { item in
+                    if inventory.contains(item) { Button("Mặc \\(item)") { equippedArmor = item } }
+                }
             case .skills:
                 Text("Đánh thường  •  Kiếm khí  •  Hộ thể  •  Phi hành")
                 Text("Kỹ năng hiện là giao diện mẫu.")
