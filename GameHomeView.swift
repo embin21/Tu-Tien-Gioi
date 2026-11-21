@@ -118,6 +118,11 @@ struct GameHomeView: View {
                         regionButton("Thanh Vân Sơn", detail: "Sơn môn và bãi tu luyện • Cấp 1", requiredLevel: 1)
                         regionButton("Hỏa Diệm Cốc", detail: "Thung lũng dung nham • Cấp 3", requiredLevel: 3)
                         regionButton("Băng Phong Cốc", detail: "Thung lũng băng giá • Cấp 5", requiredLevel: 5)
+                        regionButton("Lạc Hà Cốc", detail: "Thung lũng hoàng hôn • Cấp 7", requiredLevel: 7)
+                        regionButton("Yêu Thú Sâm Lâm", detail: "Rừng cổ đầy linh thú • Cấp 9", requiredLevel: 9)
+                        regionButton("Thiên Kiếm Di Tích", detail: "Tàn tích kiếm tu • Cấp 12", requiredLevel: 12)
+                        regionButton("Cửu U Ma Vực", detail: "Ma vực u tối • Cấp 15", requiredLevel: 15)
+                        regionButton("Phi Thăng Tiên Giới", detail: "Tiên cảnh trên mây • Cấp 20", requiredLevel: 20)
                         Text("Mở khóa khu vực bằng cách tăng cấp nhân vật.").font(.caption2).foregroundStyle(.gray)
                     }.padding(18).frame(maxWidth: 330).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 18)).padding(24)
                 }
