@@ -30,6 +30,8 @@ struct GameHomeView: View {
     @State private var outfit = "Trang phục mặc định"
     @State private var headwear = "Không đội mũ"
     @State private var aura = "Không có hào quang"
+    @State private var isRestoringSave = false
+    @State private var saveStatus = "Chưa lưu"
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
@@ -118,11 +120,79 @@ struct GameHomeView: View {
                 }
             }
         }
+        .onAppear { loadGame() }
+        .onChange(of: saveFingerprint) { _ in
+            if !isRestoringSave { saveGame() }
+        }
         .onChange(of: monsterHitPulse) { _ in
             hp = max(0, hp - 8)
             combatMessage = "Xích Giác phản công! -8 HP"
         }
         .preferredColorScheme(.dark)
+    }
+
+
+    // Stage 15: automatic local save/restore.
+    private var saveFingerprint: String {
+        [
+            String(hp), String(mana), String(monsterHP), String(exp), String(level),
+            String(currency), String(lootClaimed), inventory.joined(separator: "~"),
+            String(realmIndex), equippedWeapon, equippedArmor, String(questKills),
+            String(questClaimed), mount, String(isMounted), wings, pet, artifact,
+            outfit, headwear, aura
+        ].joined(separator: "|")
+    }
+
+    func saveGame() {
+        let save = GameSave(
+            hp: hp, mana: mana, monsterHP: monsterHP, exp: exp, level: level,
+            currency: currency, lootClaimed: lootClaimed, inventory: inventory,
+            realmIndex: realmIndex, equippedWeapon: equippedWeapon,
+            equippedArmor: equippedArmor, questKills: questKills,
+            questClaimed: questClaimed, mount: mount, isMounted: isMounted,
+            wings: wings, pet: pet, artifact: artifact, outfit: outfit,
+            headwear: headwear, aura: aura
+        )
+        do {
+            let data = try JSONEncoder().encode(save)
+            UserDefaults.standard.set(data, forKey: "ttg_save_stage15")
+            saveStatus = "Đã lưu tự động"
+        } catch {
+            saveStatus = "Lỗi lưu dữ liệu"
+        }
+    }
+
+    func loadGame() {
+        guard let data = UserDefaults.standard.data(forKey: "ttg_save_stage15"),
+              let save = try? JSONDecoder().decode(GameSave.self, from: data) else {
+            saveStatus = "Chưa có bản lưu — sẽ tự lưu khi chơi"
+            return
+        }
+        isRestoringSave = true
+        hp = min(100, max(0, save.hp))
+        mana = min(100, max(0, save.mana))
+        monsterHP = min(120, max(0, save.monsterHP))
+        exp = max(0, save.exp)
+        level = max(1, save.level)
+        currency = max(0, save.currency)
+        lootClaimed = save.lootClaimed
+        inventory = Array(save.inventory.prefix(40))
+        realmIndex = min(realms.count - 1, max(0, save.realmIndex))
+        equippedWeapon = save.equippedWeapon
+        equippedArmor = save.equippedArmor
+        questKills = max(0, save.questKills)
+        questClaimed = save.questClaimed
+        mount = save.mount
+        isMounted = save.isMounted
+        wings = save.wings
+        pet = save.pet
+        artifact = save.artifact
+        outfit = save.outfit
+        headwear = save.headwear
+        aura = save.aura
+        saveStatus = "Đã khôi phục bản lưu"
+        isRestoringSave = false
+        saveGame()
     }
 
     func meter(_ label: String, value: Double, color: Color) -> some View {
