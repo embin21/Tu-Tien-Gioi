@@ -13,6 +13,9 @@ struct GameHomeView: View {
     @State private var level = 1
     @State private var combatMessage = "Xích Giác xuất hiện!"
     @State private var attackPulse = 0
+    @State private var monsterHitPulse = 0
+    @State private var currency = 0
+    @State private var lootClaimed = false
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
            let p = try? JSONDecoder().decode(PlayerProfile.self, from: data) { return p }
@@ -22,7 +25,7 @@ struct GameHomeView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                WorldSceneView(moveX: $moveX, moveY: $moveY, attackPulse: $attackPulse).ignoresSafeArea()
+                WorldSceneView(moveX: $moveX, moveY: $moveY, attackPulse: $attackPulse, monsterHitPulse: $monsterHitPulse, monsterDefeated: Binding(get: { monsterHP <= 0 }, set: { _ in })).ignoresSafeArea()
                 VStack {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -47,8 +50,17 @@ struct GameHomeView: View {
                         }
                         Spacer()
                         if monsterHP <= 0 {
-                            Button("Hồi sinh quái") { respawnMonster() }
-                                .font(.caption.bold()).padding(8).background(.black.opacity(0.7)).clipShape(RoundedRectangle(cornerRadius: 8))
+                            VStack(alignment: .trailing, spacing: 5) {
+                                if !lootClaimed {
+                                    Button("Nhặt linh thạch +10") {
+                                        currency += 10
+                                        lootClaimed = true
+                                        combatMessage = "Đã nhặt 10 linh thạch"
+                                    }.font(.caption.bold()).padding(7).background(.cyan.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 8))
+                                }
+                                Button("Hồi sinh quái") { respawnMonster() }
+                                    .font(.caption.bold()).padding(7).background(.black.opacity(0.7)).clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
                         }
                     }.padding(9).background(.black.opacity(0.65)).clipShape(RoundedRectangle(cornerRadius: 10))
                     Spacer()
@@ -89,7 +101,12 @@ struct GameHomeView: View {
                     }.padding(18).background(.ultraThinMaterial).clipShape(RoundedRectangle(cornerRadius: 18)).padding(34)
                 }
             }
-        }.preferredColorScheme(.dark)
+        }
+        .onChange(of: monsterHitPulse) { _ in
+            hp = max(0, hp - 8)
+            combatMessage = "Xích Giác phản công! -8 HP"
+        }
+        .preferredColorScheme(.dark)
     }
 
     func meter(_ label: String, value: Double, color: Color) -> some View {
@@ -130,6 +147,7 @@ struct GameHomeView: View {
         attackPulse += 1
         monsterHP = max(0, monsterHP - damage)
         if monsterHP == 0 {
+            lootClaimed = false
             exp += 30
             combatMessage = "Hạ quái! +30 EXP"
             if exp >= level * 100 {
@@ -144,6 +162,7 @@ struct GameHomeView: View {
 
     func respawnMonster() {
         monsterHP = 120
+        lootClaimed = false
         combatMessage = "Xích Giác đã hồi sinh"
     }
 
@@ -159,7 +178,7 @@ struct GameHomeView: View {
                 Text("Túi đồ (0/40)").font(.headline)
                 Text("Chưa có vật phẩm. Vật phẩm nhặt được sẽ xuất hiện tại đây.")
             case .shop:
-                Text("Tiền: 0  •  Linh thạch: 0")
+                Text("Tiền: 0  •  Linh thạch: \\(currency)")
                 Text("Shop đang chờ kết nối dữ liệu vật phẩm.")
             case .skills:
                 Text("Đánh thường  •  Kiếm khí  •  Hộ thể  •  Phi hành")
