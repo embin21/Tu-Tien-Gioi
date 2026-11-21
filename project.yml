@@ -1,1 +1,30 @@
 
+
+name: TuTienGioi
+options:
+  bundleIdPrefix: com.embin21
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+targets:
+  TuTienGioi:
+    type: application
+    platform: iOS
+    sources:
+      - path: .
+        excludes:
+          - project.yml
+          - codemagic.yaml
+          - README*
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.embin21.tutiengioi
+        PRODUCT_NAME: TuTienGioi
+        INFOPLIST_KEY_CFBundleDisplayName: Tu Tiên Giới
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        CODE_SIGN_STYLE: Automatic
