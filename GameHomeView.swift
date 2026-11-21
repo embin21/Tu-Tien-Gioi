@@ -143,7 +143,7 @@ struct GameHomeView: View {
             case "Kỹ năng 3": stats = (20, 8)
             default: stats = (40, 15)
             }
-            attackMonster(damage: stats.0, manaCost: stats.1)
+            attackMonster(damage: stats.0 + Double(powerScore) * 0.15 + companionPower, manaCost: stats.1)
         } label: {
             VStack(spacing: 2) {
                 Text(symbol).font(.title2)
@@ -263,6 +263,26 @@ struct GameHomeView: View {
                 }
                 ForEach(["Áo vải", "Áo da", "Long Lân Giáp", "Huyền Vũ Giáp"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Mặc \\(item)") { equippedArmor = item } }
+                }
+            case .companions:
+                Text("Thú cưỡi: \\(mount)")
+                ForEach(["Thanh Vân Hạc", "Tử Kim Kỳ Lân"], id: \\.self) { item in
+                    if inventory.contains(item) { Button("Cưỡi \\(item)") { mount = item } }
+                }
+                Divider().overlay(.white.opacity(0.3))
+                Text("Cánh: \\(wings)")
+                ForEach(["Phong Vũ Chi Dực", "Phượng Hoàng Thần Dực"], id: \\.self) { item in
+                    if inventory.contains(item) { Button("Trang bị \\(item)") { wings = item } }
+                }
+                Divider().overlay(.white.opacity(0.3))
+                Text("Pet: \\(pet)")
+                ForEach(["Linh Hồ", "Cửu Vĩ Thiên Hồ"], id: \\.self) { item in
+                    if inventory.contains(item) { Button("Triệu hồi \\(item)") { pet = item } }
+                }
+                Divider().overlay(.white.opacity(0.3))
+                Text("Bảo khí: \\(artifact)")
+                ForEach(["Hỏa Linh Châu", "Trấn Yêu Tháp"], id: \\.self) { item in
+                    if inventory.contains(item) { Button("Kích hoạt \\(item)") { artifact = item } }
                 }
             case .quests:
                 Text("NPC: Trưởng lão Thanh Vân").font(.headline)
