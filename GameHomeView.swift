@@ -16,6 +16,9 @@ struct GameHomeView: View {
     @State private var monsterHitPulse = 0
     @State private var currency = 0
     @State private var lootClaimed = false
+    @State private var inventory: [String] = []
+    @State private var realmIndex = 0
+    private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
            let p = try? JSONDecoder().decode(PlayerProfile.self, from: data) { return p }
@@ -54,8 +57,9 @@ struct GameHomeView: View {
                                 if !lootClaimed {
                                     Button("Nhặt linh thạch +10") {
                                         currency += 10
+                                        inventory.append("Hỏa linh châu")
                                         lootClaimed = true
-                                        combatMessage = "Đã nhặt 10 linh thạch"
+                                        combatMessage = "Nhặt được 10 linh thạch và Hỏa linh châu"
                                     }.font(.caption.bold()).padding(7).background(.cyan.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 8))
                                 }
                                 Button("Hồi sinh quái") { respawnMonster() }
@@ -160,6 +164,15 @@ struct GameHomeView: View {
         }
     }
 
+    func breakthrough() {
+        guard exp >= 100, realmIndex < realms.count - 1 else { return }
+        exp -= 100
+        realmIndex += 1
+        combatMessage = "Đột phá thành công: \(realms[realmIndex])!"
+        mana = min(100, mana + 20)
+        hp = min(100, hp + 20)
+    }
+
     func respawnMonster() {
         monsterHP = 120
         lootClaimed = false
@@ -174,9 +187,19 @@ struct GameHomeView: View {
                 Text("⚔️  \(profile.name)").font(.title3.bold())
                 Text("Môn phái: \(profile.sect)  •  Giới tính: \(profile.gender)")
                 Text("Cấp độ: \(level)  •  EXP: \(exp)/\(level * 100)")
+                Text("Cảnh giới: \(realms[realmIndex])")
+                Button("Đột phá cảnh giới (100 EXP)") { breakthrough() }
+                    .disabled(exp < 100 || realmIndex >= realms.count - 1)
+                    .padding(9).background(.purple.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 9))
             case .bag:
-                Text("Túi đồ (0/40)").font(.headline)
-                Text("Chưa có vật phẩm. Vật phẩm nhặt được sẽ xuất hiện tại đây.")
+                Text("Túi đồ (\(inventory.count)/40)").font(.headline)
+                if inventory.isEmpty {
+                    Text("Chưa có vật phẩm. Hãy đánh quái để nhận chiến lợi phẩm.")
+                } else {
+                    ForEach(Array(Dictionary(grouping: inventory, by: { $0 }).keys.sorted()), id: \.self) { item in
+                        Text("🔹 \(item) × \(inventory.filter { $0 == item }.count)")
+                    }
+                }
             case .shop:
                 Text("Tiền: 0  •  Linh thạch: \\(currency)")
                 Text("Shop đang chờ kết nối dữ liệu vật phẩm.")
