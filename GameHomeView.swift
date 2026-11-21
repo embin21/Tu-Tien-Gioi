@@ -20,6 +20,8 @@ struct GameHomeView: View {
     @State private var realmIndex = 0
     @State private var equippedWeapon = "Kiếm gỗ"
     @State private var equippedArmor = "Áo vải"
+    @State private var questKills = 0
+    @State private var questClaimed = false
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
@@ -155,6 +157,7 @@ struct GameHomeView: View {
         if monsterHP == 0 {
             lootClaimed = false
             exp += 30
+            questKills += 1
             combatMessage = "Hạ quái! +30 EXP"
             if exp >= level * 100 {
                 exp -= level * 100
@@ -231,16 +234,37 @@ struct GameHomeView: View {
                 shopItem("Kiếm sắt", price: 20)
                 shopItem("Áo da", price: 15)
                 shopItem("Kiếm linh", price: 50)
+                shopItem("Hỏa Long Kiếm", price: 100)
+                shopItem("Băng Phách Kiếm", price: 140)
+                shopItem("Thiên Lôi Kiếm", price: 200)
+                shopItem("Long Lân Giáp", price: 160)
+                shopItem("Huyền Vũ Giáp", price: 220)
             case .equipment:
                 Text("Vũ khí: \\(equippedWeapon)")
                 Text("Giáp: \\(equippedArmor)")
                 Text("Sức mạnh: \\(powerScore)")
                 Text("Phòng thủ: \\(defenseScore)")
-                ForEach(["Kiếm gỗ", "Kiếm sắt", "Kiếm linh"], id: \\.self) { item in
+                ForEach(["Kiếm gỗ", "Kiếm sắt", "Kiếm linh", "Hỏa Long Kiếm", "Băng Phách Kiếm", "Thiên Lôi Kiếm"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Trang bị \\(item)") { equippedWeapon = item } }
                 }
-                ForEach(["Áo vải", "Áo da"], id: \\.self) { item in
+                ForEach(["Áo vải", "Áo da", "Long Lân Giáp", "Huyền Vũ Giáp"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Mặc \\(item)") { equippedArmor = item } }
+                }
+            case .quests:
+                Text("NPC: Trưởng lão Thanh Vân").font(.headline)
+                Text("Nhiệm vụ: Đánh bại 3 Xích Giác")
+                Text("Tiến độ: \\(min(questKills, 3))/3")
+                if questKills >= 3 && !questClaimed {
+                    Button("Nhận thưởng: 60 EXP + 30 linh thạch") {
+                        exp += 60
+                        currency += 30
+                        questClaimed = true
+                        combatMessage = "Hoàn thành nhiệm vụ! +60 EXP, +30 linh thạch"
+                    }.padding(8).background(.green.opacity(0.3)).clipShape(RoundedRectangle(cornerRadius: 8))
+                } else if questClaimed {
+                    Text("Đã nhận thưởng. Nhiệm vụ hoàn thành!")
+                } else {
+                    Text("Hãy tiếp tục săn Xích Giác để hoàn thành nhiệm vụ.")
                 }
             case .skills:
                 Text("Đánh thường  •  Kiếm khí  •  Hộ thể  •  Phi hành")
