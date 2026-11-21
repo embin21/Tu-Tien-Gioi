@@ -174,11 +174,11 @@ struct GameHomeView: View {
     }
 
     var powerScore: Int {
-        let bonus = ["Hỏa Long Kiếm": 65, "Băng Phách Kiếm": 75, "Thiên Lôi Kiếm": 90, "Kiếm linh": 35, "Kiếm sắt": 15][equippedWeapon] ?? 5
+        let bonus = ["Hỏa Long Kiếm": 65, "Băng Phách Kiếm": 75, "Thiên Lôi Kiếm": 90, "Thanh Long Kiếm": 110, "Vạn Kiếm Quy Tông": 145, "Cửu U Ma Kiếm": 130, "Kiếm linh": 35, "Kiếm sắt": 15][equippedWeapon] ?? 5
         return level * 10 + bonus
     }
 
-    var companionPower: Double { (pet == "Linh Hồ" ? 8 : 0) + (artifact == "Hỏa Linh Châu" ? 12 : 0) }
+    var companionPower: Double { (["Linh Hồ": 8, "Cửu Vĩ Thiên Hồ": 18, "Bạch Trạch": 14, "Kim Sí Điểu": 16, "Thanh Long": 24, "Hỏa Phượng": 22, "Ngân Nguyệt Lang": 12, "Bạch Hổ Chiến Thú": 20][pet] ?? 0) + (["Hỏa Linh Châu": 12, "Trấn Yêu Tháp": 18, "Thái Cực Đồ": 22, "Sinh Mệnh Chi Thụ": 25][artifact] ?? 0) }
 
     var defenseScore: Int {
         let bonus = equippedArmor == "Áo da" ? 15 : 5
@@ -252,36 +252,50 @@ struct GameHomeView: View {
                 shopItem("Linh Hồ", price: 150)
                 shopItem("Cửu Vĩ Thiên Hồ", price: 300)
                 shopItem("Hỏa Linh Châu", price: 130)
-                shopItem("Trấn Yêu Tháp", price: 280)
+                shopItem("Trấn Yêu Tháp", price: 280)                shopItem("Ngân Nguyệt Lang", price: 190)
+                shopItem("Thanh Long", price: 420)
+                shopItem("Hỏa Phượng", price: 380)
+                shopItem("Bạch Hổ Chiến Thú", price: 350)
+                shopItem("Lưu Quang Tiên Dực", price: 450)
+                shopItem("Cửu Thiên Thần Dực", price: 600)
+                shopItem("Thanh Long Kiếm", price: 360)
+                shopItem("Vạn Kiếm Quy Tông", price: 520)
+                shopItem("Cửu U Ma Kiếm", price: 480)
+                shopItem("Thiên Tằm Bảo Giáp", price: 340)
+                shopItem("Cửu Thiên Tiên Giáp", price: 560)
+                shopItem("Bạch Trạch", price: 240)
+                shopItem("Kim Sí Điểu", price: 330)
+                shopItem("Thái Cực Đồ", price: 390)
+                shopItem("Sinh Mệnh Chi Thụ", price: 500)
             case .equipment:
                 Text("Vũ khí: \\(equippedWeapon)")
                 Text("Giáp: \\(equippedArmor)")
                 Text("Sức mạnh: \\(powerScore)")
                 Text("Phòng thủ: \\(defenseScore)")
-                ForEach(["Kiếm gỗ", "Kiếm sắt", "Kiếm linh", "Hỏa Long Kiếm", "Băng Phách Kiếm", "Thiên Lôi Kiếm"], id: \\.self) { item in
+                ForEach(["Kiếm gỗ", "Kiếm sắt", "Kiếm linh", "Hỏa Long Kiếm", "Băng Phách Kiếm", "Thiên Lôi Kiếm", "Thanh Long Kiếm", "Vạn Kiếm Quy Tông", "Cửu U Ma Kiếm"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Trang bị \\(item)") { equippedWeapon = item } }
                 }
-                ForEach(["Áo vải", "Áo da", "Long Lân Giáp", "Huyền Vũ Giáp"], id: \\.self) { item in
+                ForEach(["Áo vải", "Áo da", "Long Lân Giáp", "Huyền Vũ Giáp", "Thiên Tằm Bảo Giáp", "Cửu Thiên Tiên Giáp"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Mặc \\(item)") { equippedArmor = item } }
                 }
             case .companions:
                 Text("Thú cưỡi: \\(mount)")
-                ForEach(["Thanh Vân Hạc", "Tử Kim Kỳ Lân"], id: \\.self) { item in
+                ForEach(["Thanh Vân Hạc", "Tử Kim Kỳ Lân", "Ngân Nguyệt Lang", "Thanh Long", "Hỏa Phượng", "Bạch Hổ Chiến Thú"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Cưỡi \\(item)") { mount = item } }
                 }
                 Divider().overlay(.white.opacity(0.3))
                 Text("Cánh: \\(wings)")
-                ForEach(["Phong Vũ Chi Dực", "Phượng Hoàng Thần Dực"], id: \\.self) { item in
+                ForEach(["Phong Vũ Chi Dực", "Phượng Hoàng Thần Dực", "Lưu Quang Tiên Dực", "Cửu Thiên Thần Dực"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Trang bị \\(item)") { wings = item } }
                 }
                 Divider().overlay(.white.opacity(0.3))
                 Text("Pet: \\(pet)")
-                ForEach(["Linh Hồ", "Cửu Vĩ Thiên Hồ"], id: \\.self) { item in
+                ForEach(["Linh Hồ", "Cửu Vĩ Thiên Hồ", "Bạch Trạch", "Kim Sí Điểu"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Triệu hồi \\(item)") { pet = item } }
                 }
                 Divider().overlay(.white.opacity(0.3))
                 Text("Bảo khí: \\(artifact)")
-                ForEach(["Hỏa Linh Châu", "Trấn Yêu Tháp"], id: \\.self) { item in
+                ForEach(["Hỏa Linh Châu", "Trấn Yêu Tháp", "Thái Cực Đồ", "Sinh Mệnh Chi Thụ"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Kích hoạt \\(item)") { artifact = item } }
                 }
             case .quests:
