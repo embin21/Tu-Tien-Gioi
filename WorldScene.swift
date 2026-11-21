@@ -63,7 +63,11 @@ struct WorldSceneView: UIViewRepresentable {
         context.coordinator.player = player
         context.coordinator.body = player.childNode(withName: "body", recursively: true)
         context.coordinator.head = player.childNode(withName: "head", recursively: true)
-        context.coordinator.petNode = player.childNode(withName: "petRoot", recursively: true)
+        if let pet = player.childNode(withName: "petRoot", recursively: true) {
+            pet.removeFromParentNode()
+            scene.rootNode.addChildNode(pet)
+            context.coordinator.petNode = pet
+        }
         context.coordinator.monster = monster
         context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet, mounted: isMounted)
         return view
