@@ -60,7 +60,8 @@ struct GameHomeView: View {
                 VStack {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(profile.name)  •  Lv.\(level)").font(.headline)
+                            Text("\(profile.name)  •  Lv.\(level)  •  LC \\(powerScore)").font(.headline)
+                            Text("\(realms[realmIndex])").font(.caption2).foregroundStyle(.cyan)
                             meter("HP", value: hp / maxHP, color: .red)
                             meter("MP", value: mana / maxMana, color: .blue)
                         }.padding(10).background(.black.opacity(0.62)).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -105,21 +106,17 @@ struct GameHomeView: View {
                         }
                     }.padding(9).background(.black.opacity(0.65)).clipShape(RoundedRectangle(cornerRadius: 10))
                     Spacer()
-                    HStack(alignment: .bottom) {
-                        JoystickView(x: $moveX, y: $moveY).frame(width: 132, height: 132)
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 9) {
-                            HStack(spacing: 8) {
-                                skillButton("⚔️", title: "Đánh")
-                                skillButton("❄️", title: "Kỹ năng 1")
-                            }
-                            HStack(spacing: 8) {
-                                skillButton("🔥", title: "Kỹ năng 2")
-                                skillButton("🌪️", title: "Kỹ năng 3")
-                                skillButton("✨", title: "Kỹ năng 4")
-                            }
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Label("AUTO TU LUYỆN", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
+                                .font(.caption.bold()).foregroundStyle(.green)
+                            Text("Nhân vật tự động chiến đấu và nhận thưởng")
+                                .font(.system(size: 10)).foregroundStyle(.white.opacity(0.8))
                         }
-                    }
+                        Spacer()
+                        Text("ẢI 1").font(.caption.bold()).padding(.horizontal, 12).padding(.vertical, 8)
+                            .background(.purple.opacity(0.65)).clipShape(Capsule())
+                    }.padding(12).background(.black.opacity(0.72)).clipShape(RoundedRectangle(cornerRadius: 14))
                     HStack(spacing: 8) {
                         ForEach(GamePanel.allCases) { item in
                             Button { panel = item } label: {
@@ -151,6 +148,23 @@ struct GameHomeView: View {
             }
         }
         .onAppear { loadGame() }
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                guard !Task.isCancelled else { break }
+                if selectedRegion != "Tân Thủ Thôn" && selectedRegion != "Thanh Vân Đại Điện" && hp > 0 {
+                    if monsterHP > 0 {
+                        attackMonster(damage: 18 + Double(powerScore) * 0.08 + companionPower * 0.25, manaCost: 0)
+                        if monsterHP > 0 { combatMessage = "Tự động farm • " + combatMessage }
+                    } else if !lootClaimed {
+                        currency += 10
+                        inventory.append("Hỏa linh châu")
+                        lootClaimed = true
+                        combatMessage = "Tự động nhặt: +10 linh thạch, Hỏa linh châu"
+                    } else { respawnMonster() }
+                }
+            }
+        }
         .onChange(of: saveFingerprint) { _ in
             if !isRestoringSave { saveGame() }
         }
