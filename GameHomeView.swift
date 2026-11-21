@@ -34,6 +34,17 @@ struct GameHomeView: View {
     @State private var saveStatus = "Chưa lưu"
     @AppStorage("ttg_region_stage16") private var selectedRegion = "Thanh Vân Sơn"
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
+
+    private var maxHP: Double { profile.sect == "Võ Tông" ? 130 : 100 }
+    private var maxMana: Double { profile.sect == "Linh Tông" ? 120 : 80 }
+    private var classStatDescription: String {
+        switch profile.sect {
+        case "Võ Tông": return "Sinh lực tối đa: 130 HP"
+        case "Linh Tông": return "Linh lực tối đa: 120 MP"
+        case "Kiếm Tông": return "Sinh lực: 100 HP • Linh lực: 80 MP"
+        default: return "Sinh lực: 100 HP • Linh lực: 80 MP"
+        }
+    }
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
            let p = try? JSONDecoder().decode(PlayerProfile.self, from: data) { return p }
@@ -48,8 +59,8 @@ struct GameHomeView: View {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(profile.name)  •  Lv.\(level)").font(.headline)
-                            meter("HP", value: hp / 100, color: .red)
-                            meter("MP", value: mana / 100, color: .blue)
+                            meter("HP", value: hp / maxHP, color: .red)
+                            meter("MP", value: mana / maxMana, color: .blue)
                         }.padding(10).background(.black.opacity(0.62)).clipShape(RoundedRectangle(cornerRadius: 12))
                         Spacer()
                         if selectedRegion == "Tân Thủ Thôn" || selectedRegion == "Thanh Vân Đại Điện" {
@@ -187,8 +198,8 @@ struct GameHomeView: View {
             return
         }
         isRestoringSave = true
-        hp = min(100, max(0, save.hp))
-        mana = min(100, max(0, save.mana))
+        hp = min(maxHP, max(0, save.hp))
+        mana = min(maxMana, max(0, save.mana))
         monsterHP = min(120, max(0, save.monsterHP))
         exp = max(0, save.exp)
         level = max(1, save.level)
@@ -321,8 +332,8 @@ struct GameHomeView: View {
         exp -= 100
         realmIndex += 1
         combatMessage = "Đột phá thành công: \(realms[realmIndex])!"
-        mana = min(100, mana + 20)
-        hp = min(100, hp + 20)
+        mana = min(maxMana, mana + 20)
+        hp = min(maxHP, hp + 20)
     }
 
     func respawnMonster() {
@@ -339,6 +350,7 @@ struct GameHomeView: View {
                 Text("⚔️  \(profile.name)").font(.title3.bold())
                 Text("Môn phái: \(profile.sect)  •  Giới tính: \(profile.gender)")
                 Text("Nội tại: \\(classPassive.title)").font(.headline).foregroundStyle(.cyan)
+                Text(classStatDescription).font(.caption).foregroundStyle(.secondary)
                 Text(classPassive.detail).font(.caption).foregroundStyle(.secondary)
                 Text("Cấp độ: \(level)  •  EXP: \(exp)/\(level * 100)")
                 Text("Cảnh giới: \(realms[realmIndex])")
