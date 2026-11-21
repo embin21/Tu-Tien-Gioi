@@ -7,6 +7,12 @@ struct WorldSceneView: UIViewRepresentable {
     @Binding var attackPulse: Int
     @Binding var monsterHitPulse: Int
     @Binding var monsterDefeated: Bool
+    var outfit: String
+    var headwear: String
+    var auraStyle: String
+    var wings: String
+    var mount: String
+    var pet: String
 
     func makeUIView(context: Context) -> SCNView {
         let view = SCNView()
@@ -57,11 +63,13 @@ struct WorldSceneView: UIViewRepresentable {
         context.coordinator.body = player.childNode(withName: "body", recursively: true)
         context.coordinator.head = player.childNode(withName: "head", recursively: true)
         context.coordinator.monster = monster
+        context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet)
         return view
     }
 
     func updateUIView(_ uiView: SCNView, context: Context) {
         guard let player = context.coordinator.player else { return }
+        context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet)
         if attackPulse != context.coordinator.lastAttackPulse {
             context.coordinator.lastAttackPulse = attackPulse
             if let monster = context.coordinator.monster {
@@ -142,6 +150,30 @@ struct WorldSceneView: UIViewRepresentable {
         var lastAttackPulse = 0
         var lastMonsterHit = Date.distantPast
         var lootShown = false
+        var lastAppearance = ""
+        func applyAppearance(outfit: String, headwear: String, auraStyle: String, wings: String, mount: String, pet: String) {
+            let key = [outfit, headwear, auraStyle, wings, mount, pet].joined(separator: "|")
+            guard key != lastAppearance, let player = player else { return }
+            lastAppearance = key
+            let body = player.childNode(withName: "body", recursively: true)
+            let colors: [String: UIColor] = [
+                "Tiên Y Thanh Vân": UIColor(red: 0.25, green: 0.68, blue: 0.92, alpha: 1),
+                "Chiến Bào Xích Viêm": UIColor(red: 0.82, green: 0.16, blue: 0.08, alpha: 1),
+                "Dạ Hành Huyền Ảnh": UIColor(red: 0.16, green: 0.12, blue: 0.28, alpha: 1),
+                "Long Thần Đế Bào": UIColor(red: 0.86, green: 0.62, blue: 0.12, alpha: 1),
+                "Phượng Vũ Tiên Y": UIColor(red: 0.72, green: 0.20, blue: 0.38, alpha: 1)
+            ]
+            body?.geometry?.firstMaterial?.diffuse.contents = colors[outfit] ?? UIColor(red: 0.16, green: 0.34, blue: 0.72, alpha: 1)
+            player.childNode(withName: "cosmeticHat", recursively: true)?.isHidden = headwear == "Không đội mũ"
+            player.childNode(withName: "cosmeticMask", recursively: true)?.isHidden = headwear != "Mặt Nạ U Minh"
+            player.childNode(withName: "cosmeticAura", recursively: true)?.isHidden = auraStyle == "Không có hào quang"
+            player.childNode(withName: "cosmeticWings", recursively: true)?.isHidden = wings == "Chưa có cánh"
+            player.childNode(withName: "cosmeticMount", recursively: true)?.isHidden = mount == "Chưa có thú cưỡi"
+            player.childNode(withName: "cosmeticPet", recursively: true)?.isHidden = pet == "Chưa có pet"
+            player.childNode(withName: "cosmeticHat", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = headwear == "Vương Miện Thiên Đế" ? UIColor.systemYellow : UIColor.cyan
+            player.childNode(withName: "cosmeticAura", recursively: true)?.geometry?.firstMaterial?.emission.contents = auraStyle == "Tinh Hà Quang Hoàn" ? UIColor.systemPurple : UIColor.systemYellow
+            player.childNode(withName: "cosmeticWings", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = wings == "Cửu Thiên Thần Dực" ? UIColor.systemYellow : UIColor.systemCyan
+        }
     }
 
     private func material(_ color: UIColor, roughness: CGFloat = 0.85, emission: UIColor? = nil) -> SCNMaterial {
@@ -206,6 +238,47 @@ struct WorldSceneView: UIViewRepresentable {
         auraNode.eulerAngles.x = -.pi / 2
         auraNode.position.y = 0.03
         root.addChildNode(auraNode)
+
+        let crown = SCNPyramid(width: 0.48, height: 0.30, length: 0.38)
+        crown.firstMaterial = material(.systemYellow, roughness: 0.35, emission: .yellow)
+        let crownNode = SCNNode(geometry: crown)
+        crownNode.name = "cosmeticHat"
+        crownNode.position = SCNVector3(0, 1.48, 0)
+        crownNode.isHidden = true
+        root.addChildNode(crownNode)
+
+        let mask = SCNBox(width: 0.38, height: 0.16, length: 0.08, chamferRadius: 0.06)
+        mask.firstMaterial = material(.black, roughness: 0.4)
+        let maskNode = SCNNode(geometry: mask)
+        maskNode.name = "cosmeticMask"
+        maskNode.position = SCNVector3(0, 0.99, 0.27)
+        maskNode.isHidden = true
+        root.addChildNode(maskNode)
+
+        let wingGeometry = SCNPlane(width: 0.68, height: 0.90)
+        wingGeometry.firstMaterial = material(.cyan, roughness: 0.4, emission: .cyan)
+        let wingNode = SCNNode(geometry: wingGeometry)
+        wingNode.name = "cosmeticWings"
+        wingNode.position = SCNVector3(0, 0.88, -0.28)
+        wingNode.isHidden = true
+        root.addChildNode(wingNode)
+
+        let mountGeometry = SCNSphere(radius: 0.48)
+        mountGeometry.firstMaterial = material(UIColor(red: 0.62, green: 0.52, blue: 0.36, alpha: 1))
+        let mountNode = SCNNode(geometry: mountGeometry)
+        mountNode.name = "cosmeticMount"
+        mountNode.scale = SCNVector3(1.25, 0.65, 1.45)
+        mountNode.position = SCNVector3(0, 0.30, 0.15)
+        mountNode.isHidden = true
+        root.addChildNode(mountNode)
+
+        let petGeometry = SCNSphere(radius: 0.20)
+        petGeometry.firstMaterial = material(.systemOrange, roughness: 0.5, emission: .orange)
+        let petNode = SCNNode(geometry: petGeometry)
+        petNode.name = "cosmeticPet"
+        petNode.position = SCNVector3(0.85, 0.32, 0.45)
+        petNode.isHidden = true
+        root.addChildNode(petNode)
         return root
     }
 
