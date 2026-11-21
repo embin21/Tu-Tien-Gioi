@@ -77,6 +77,7 @@ struct WorldSceneView: UIViewRepresentable {
                 monster.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.emission.contents = UIColor.red
                 monster.runAction(.sequence([.wait(duration: 0.16), .run { node in node.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.emission.contents = UIColor.black }]), forKey: "flash")
             }
+            context.coordinator.body?.runAction(.sequence([.rotateBy(x: 0, y: 0, z: -0.75, duration: 0.08), .rotateBy(x: 0, y: 0, z: 1.25, duration: 0.12), .rotateBy(x: 0, y: 0, z: -0.5, duration: 0.08)]), forKey: "swordSwing")
         }
 
         let input = hypot(moveX, moveY)
@@ -109,12 +110,6 @@ struct WorldSceneView: UIViewRepresentable {
         } else if !monsterDefeated && context.coordinator.lootShown {
             context.coordinator.scene?.rootNode.childNode(withName: "lootDrop", recursively: true)?.removeFromParentNode()
             context.coordinator.lootShown = false
-        }
-        if attackPulse != context.coordinator.lastAttackPulse {
-            context.coordinator.lastAttackPulse = attackPulse
-            if let body = context.coordinator.body {
-                body.runAction(.sequence([.rotateBy(x: 0, y: 0, z: -0.75, duration: 0.08), .rotateBy(x: 0, y: 0, z: 1.25, duration: 0.12), .rotateBy(x: 0, y: 0, z: -0.5, duration: 0.08)]), forKey: "swordSwing")
-            }
         }
         if input > 0.08 {
             let speed: Float = 0.105
@@ -272,7 +267,7 @@ struct WorldSceneView: UIViewRepresentable {
             wing.eulerAngles.y = Float(side) * -0.35
             wing.eulerAngles.z = Float(side) * -0.18
             wingsRoot.addChildNode(wing)
-            wing.runAction(.repeatForever(.autoreverses(.rotateBy(x: 0, y: 0, z: Float(side) * 0.62, duration: 0.42))), forKey: "wingFlap")
+            wing.runAction(.repeatForever(.sequence([.rotateBy(x: 0, y: 0, z: Float(side) * 0.62, duration: 0.42), .rotateBy(x: 0, y: 0, z: Float(side) * -0.62, duration: 0.42)])), forKey: "wingFlap")
         }
 
         let mountRoot = SCNNode(); mountRoot.name = "cosmeticMount"; mountRoot.isHidden = true; root.addChildNode(mountRoot)
