@@ -440,8 +440,12 @@ struct GameHomeView: View {
         }
     }
 
+    var mountTier: String { mountLevel >= 15 ? "Thần Thú" : mountLevel >= 10 ? "Tiên Thú" : mountLevel >= 5 ? "Linh Thú" : "Ấu Thú" }
+    var wingTier: String { wingLevel >= 15 ? "Thần Dực" : wingLevel >= 10 ? "Tiên Dực" : wingLevel >= 5 ? "Linh Dực" : "Sơ Dực" }
+    var petTier: String { petLevel >= 15 ? "Thần Sủng" : petLevel >= 10 ? "Tiên Sủng" : petLevel >= 5 ? "Linh Sủng" : "Ấu Sủng" }
+
     var powerScore: Int {
-        let bonus = ["Hỏa Long Kiếm": 65, "Băng Phách Kiếm": 75, "Thiên Lôi Kiếm": 90, "Thanh Long Kiếm": 110, "Vạn Kiếm Quy Tông": 145, "Cửu U Ma Kiếm": 130, "Kiếm linh": 35, "Kiếm sắt": 15][equippedWeapon] ?? 5
+        let bonus = wingLevel * 3 +"Hỏa Long Kiếm": 65, "Băng Phách Kiếm": 75, "Thiên Lôi Kiếm": 90, "Thanh Long Kiếm": 110, "Vạn Kiếm Quy Tông": 145, "Cửu U Ma Kiếm": 130, "Kiếm linh": 35, "Kiếm sắt": 15][equippedWeapon] ?? 5
         return level * 10 + bonus + strength * 2 + agility
     }
 
@@ -645,6 +649,8 @@ struct GameHomeView: View {
             case .companions:
                 Text("THÚ CƯỠI: \\(mount)").font(.headline)
                 Text("Cấp \\(mountLevel) • EXP \\(mountExp)/\\(mountLevel * 5) • +\\(mountLevel * 2)% tốc độ tu luyện").font(.caption).foregroundStyle(.cyan)
+                Text("Phẩm bậc: \\(mountTier) • Mốc tiến hóa: cấp 5 / 10 / 15").font(.caption2).foregroundStyle(.yellow)
+                Text("Nội tại: tăng \\(mountLevel * 2)% tốc độ nhận EXP").font(.caption2)
                 Button("Nuôi dưỡng thú cưỡi (+1 EXP)") { guard currency >= 10, mount != "Chưa có thú cưỡi" else { return }; currency -= 10; mountExp += 1; if mountExp >= mountLevel * 5 { mountExp = 0; mountLevel += 1 } }.disabled(mount == "Chưa có thú cưỡi" || currency < 10)
                 if mount != "Chưa có thú cưỡi" {
                     Button(isMounted ? "Xuống thú cưỡi" : "Lên thú cưỡi") { isMounted.toggle() }
@@ -656,6 +662,8 @@ struct GameHomeView: View {
                 Divider().overlay(.white.opacity(0.3))
                 Text("CÁNH: \\(wings)").font(.headline)
                 Text("Cấp \\(wingLevel) • EXP \\(wingExp)/\\(wingLevel * 5) • +\\(wingLevel * 3) lực chiến").font(.caption).foregroundStyle(.cyan)
+                Text("Phẩm bậc: \\(wingTier) • Mốc tiến hóa: cấp 5 / 10 / 15").font(.caption2).foregroundStyle(.yellow)
+                Text("Nội tại: +\\(wingLevel * 3) lực chiến").font(.caption2)
                 Button("Tu luyện cánh (+1 EXP)") { guard currency >= 10, wings != "Chưa có cánh" else { return }; currency -= 10; wingExp += 1; if wingExp >= wingLevel * 5 { wingExp = 0; wingLevel += 1 } }.disabled(wings == "Chưa có cánh" || currency < 10)
                 ForEach(["Phong Vũ Chi Dực", "Phượng Hoàng Thần Dực", "Lưu Quang Tiên Dực", "Cửu Thiên Thần Dực"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Trang bị \\(item)") { wings = item } }
@@ -663,6 +671,8 @@ struct GameHomeView: View {
                 Divider().overlay(.white.opacity(0.3))
                 Text("PET: \\(pet)").font(.headline)
                 Text("Cấp \\(petLevel) • EXP \\(petExp)/\\(petLevel * 5) • +\\(petLevel * 2) sức mạnh đồng hành").font(.caption).foregroundStyle(.cyan)
+                Text("Phẩm bậc: \\(petTier) • Mốc tiến hóa: cấp 5 / 10 / 15").font(.caption2).foregroundStyle(.yellow)
+                Text("Kỹ năng đồng hành: trợ chiến +\\(petLevel * 2) sức mạnh").font(.caption2)
                 Button("Cho pet tu luyện (+1 EXP)") { guard currency >= 10, pet != "Chưa có pet" else { return }; currency -= 10; petExp += 1; if petExp >= petLevel * 5 { petExp = 0; petLevel += 1 } }.disabled(pet == "Chưa có pet" || currency < 10)
                 ForEach(["Linh Hồ", "Cửu Vĩ Thiên Hồ", "Bạch Trạch", "Kim Sí Điểu"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Triệu hồi \\(item)") { pet = item } }
