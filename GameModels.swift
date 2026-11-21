@@ -59,4 +59,9 @@ struct GameSave: Codable {
     var outfit: String
     var headwear: String
     var aura: String
+    var strength: Int? = nil
+    var agility: Int? = nil
+    var vitality: Int? = nil
+    var intelligence: Int? = nil
+    var potentialPoints: Int? = nil
 }
