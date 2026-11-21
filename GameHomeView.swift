@@ -16,6 +16,11 @@ struct GameHomeView: View {
     @State private var monsterHitPulse = 0
     @State private var shieldCharges = 0
     @State private var dodgeCharges = 0
+    @State private var strength = 0
+    @State private var agility = 0
+    @State private var vitality = 0
+    @State private var intelligence = 0
+    @State private var potentialPoints = 5
     @State private var currency = 0
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
@@ -37,8 +42,8 @@ struct GameHomeView: View {
     @AppStorage("ttg_region_stage16") private var selectedRegion = "Thanh Vân Sơn"
     private let realms = ["Luyện Khí", "Trúc Cơ", "Kim Đan", "Nguyên Anh", "Hóa Thần"]
 
-    private var maxHP: Double { profile.sect == "Võ Tông" ? 130 : 100 }
-    private var maxMana: Double { profile.sect == "Linh Tông" ? 120 : 80 }
+    private var maxHP: Double { (profile.sect == "Võ Tông" ? 130.0 : 100.0) + Double(vitality * 10) }
+    private var maxMana: Double { (profile.sect == "Linh Tông" ? 120.0 : 80.0) + Double(intelligence * 5) }
     private var classStatDescription: String {
         switch profile.sect {
         case "Võ Tông": return "Sinh lực tối đa: 130 HP"
@@ -224,7 +229,9 @@ struct GameHomeView: View {
             equippedArmor: equippedArmor, questKills: questKills,
             questClaimed: questClaimed, mount: mount, isMounted: isMounted,
             wings: wings, pet: pet, artifact: artifact, outfit: outfit,
-            headwear: headwear, aura: aura
+            headwear: headwear, aura: aura,
+            strength: strength, agility: agility, vitality: vitality,
+            intelligence: intelligence, potentialPoints: potentialPoints
         )
         do {
             let data = try JSONEncoder().encode(save)
@@ -242,6 +249,11 @@ struct GameHomeView: View {
             return
         }
         isRestoringSave = true
+        strength = max(0, save.strength ?? 0)
+        agility = max(0, save.agility ?? 0)
+        vitality = max(0, save.vitality ?? 0)
+        intelligence = max(0, save.intelligence ?? 0)
+        potentialPoints = max(0, save.potentialPoints ?? 5)
         hp = min(maxHP, max(0, save.hp))
         mana = min(maxMana, max(0, save.mana))
         monsterHP = min(120, max(0, save.monsterHP))
@@ -266,6 +278,28 @@ struct GameHomeView: View {
         saveStatus = "Đã khôi phục bản lưu"
         isRestoringSave = false
         saveGame()
+    }
+
+    @ViewBuilder func potentialRow(_ code: String, title: String, value: Int, detail: String, action: @escaping () -> Void) -> some View {
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\\(code) • \\(title)  \\(value)").font(.subheadline.bold())
+                Text(detail).font(.caption2).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("+") {
+                guard potentialPoints > 0 else { return }
+                action()
+                potentialPoints -= 1
+                hp = min(maxHP, hp + 10)
+                mana = min(maxMana, mana + 5)
+                saveGame()
+            }
+            .font(.title3.bold()).frame(width: 36, height: 32)
+            .background(potentialPoints > 0 ? .purple.opacity(0.45) : .gray.opacity(0.25))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .disabled(potentialPoints <= 0)
+        }.padding(8).background(.white.opacity(0.06)).clipShape(RoundedRectangle(cornerRadius: 9))
     }
 
     func meter(_ label: String, value: Double, color: Color) -> some View {
@@ -352,7 +386,7 @@ struct GameHomeView: View {
 
     var powerScore: Int {
         let bonus = ["Hỏa Long Kiếm": 65, "Băng Phách Kiếm": 75, "Thiên Lôi Kiếm": 90, "Thanh Long Kiếm": 110, "Vạn Kiếm Quy Tông": 145, "Cửu U Ma Kiếm": 130, "Kiếm linh": 35, "Kiếm sắt": 15][equippedWeapon] ?? 5
-        return level * 10 + bonus
+        return level * 10 + bonus + strength * 2 + agility
     }
 
     var companionPower: Double { (["Linh Hồ": 8, "Cửu Vĩ Thiên Hồ": 18, "Bạch Trạch": 14, "Kim Sí Điểu": 16, "Thanh Long": 24, "Hỏa Phượng": 22, "Ngân Nguyệt Lang": 12, "Bạch Hổ Chiến Thú": 20][pet] ?? 0) + (["Hỏa Linh Châu": 12, "Trấn Yêu Tháp": 18, "Thái Cực Đồ": 22, "Sinh Mệnh Chi Thụ": 25][artifact] ?? 0) }
@@ -405,6 +439,12 @@ struct GameHomeView: View {
                 if dodgeCharges > 0 { Text("Né tránh: \\(dodgeCharges) lần").font(.caption).foregroundStyle(.green) }
                 Text("Cấp độ: \(level)  •  EXP: \(exp)/\(level * 100)")
                 Text("Cảnh giới: \(realms[realmIndex])")
+                Divider()
+                Text("TIỀM NĂNG • Còn \\(potentialPoints) điểm").font(.headline).foregroundStyle(.yellow)
+                potentialRow("STR", title: "Sức mạnh", value: strength, detail: "+2 lực chiến mỗi điểm") { strength += 1 }
+                potentialRow("AGI", title: "Nhanh nhẹn", value: agility, detail: "+1 lực chiến mỗi điểm") { agility += 1 }
+                potentialRow("VIT", title: "Thể chất", value: vitality, detail: "+10 HP tối đa mỗi điểm") { vitality += 1 }
+                potentialRow("INT", title: "Trí lực", value: intelligence, detail: "+5 MP tối đa mỗi điểm") { intelligence += 1 }
                 Button("Đột phá cảnh giới (100 EXP)") { breakthrough() }
                     .disabled(exp < 100 || realmIndex >= realms.count - 1)
                     .padding(9).background(.purple.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 9))
