@@ -12,6 +12,7 @@ struct GameHomeView: View {
     @State private var exp = 0
     @State private var level = 1
     @State private var combatMessage = "Xích Giác xuất hiện!"
+    @State private var attackPulse = 0
     private var profile: PlayerProfile {
         if let data = UserDefaults.standard.data(forKey: "ttg_profile"),
            let p = try? JSONDecoder().decode(PlayerProfile.self, from: data) { return p }
@@ -21,7 +22,7 @@ struct GameHomeView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                WorldSceneView(moveX: $moveX, moveY: $moveY).ignoresSafeArea()
+                WorldSceneView(moveX: $moveX, moveY: $moveY, attackPulse: $attackPulse).ignoresSafeArea()
                 VStack {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -126,6 +127,7 @@ struct GameHomeView: View {
         guard monsterHP > 0 else { combatMessage = "Quái đã bị đánh bại"; return }
         guard mana >= manaCost else { combatMessage = "Không đủ MP"; return }
         mana -= manaCost
+        attackPulse += 1
         monsterHP = max(0, monsterHP - damage)
         if monsterHP == 0 {
             exp += 30
@@ -133,10 +135,10 @@ struct GameHomeView: View {
             if exp >= level * 100 {
                 exp -= level * 100
                 level += 1
-                combatMessage = "Lên cấp! Lv.\\(level)"
+                combatMessage = "Lên cấp! Lv.\(level)"
             }
         } else {
-            combatMessage = "Gây \\(Int(damage)) sát thương"
+            combatMessage = "Gây \(Int(damage)) sát thương"
         }
     }
 
@@ -152,7 +154,7 @@ struct GameHomeView: View {
             case .character:
                 Text("⚔️  \(profile.name)").font(.title3.bold())
                 Text("Môn phái: \(profile.sect)  •  Giới tính: \(profile.gender)")
-                Text("Cấp độ: \\(level)  •  EXP: \\(exp)/\\(level * 100)")
+                Text("Cấp độ: \(level)  •  EXP: \(exp)/\(level * 100)")
             case .bag:
                 Text("Túi đồ (0/40)").font(.headline)
                 Text("Chưa có vật phẩm. Vật phẩm nhặt được sẽ xuất hiện tại đây.")
