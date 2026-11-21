@@ -29,6 +29,12 @@ struct GameHomeView: View {
     @State private var guildContribution = 0
     @State private var guildKills = 0
     @State private var guildTaskClaimed = false
+    @State private var mountLevel = 1
+    @State private var mountExp = 0
+    @State private var wingLevel = 1
+    @State private var wingExp = 0
+    @State private var petLevel = 1
+    @State private var petExp = 0
     @State private var currency = 0
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
@@ -243,7 +249,9 @@ struct GameHomeView: View {
             strength: strength, agility: agility, vitality: vitality,
             intelligence: intelligence, potentialPoints: potentialPoints, selectedStage: selectedStage, isBossFight: isBossFight,
             guildName: guildName, guildLevel: guildLevel, guildExp: guildExp,
-            guildContribution: guildContribution, guildKills: guildKills, guildTaskClaimed: guildTaskClaimed
+            guildContribution: guildContribution, guildKills: guildKills, guildTaskClaimed: guildTaskClaimed,
+            mountLevel: mountLevel, mountExp: mountExp, wingLevel: wingLevel, wingExp: wingExp,
+            petLevel: petLevel, petExp: petExp
         )
         do {
             let data = try JSONEncoder().encode(save)
@@ -274,6 +282,12 @@ struct GameHomeView: View {
         guildContribution = max(0, save.guildContribution ?? 0)
         guildKills = max(0, save.guildKills ?? 0)
         guildTaskClaimed = save.guildTaskClaimed ?? false
+        mountLevel = max(1, save.mountLevel ?? 1)
+        mountExp = max(0, save.mountExp ?? 0)
+        wingLevel = max(1, save.wingLevel ?? 1)
+        wingExp = max(0, save.wingExp ?? 0)
+        petLevel = max(1, save.petLevel ?? 1)
+        petExp = max(0, save.petExp ?? 0)
         hp = min(maxHP, max(0, save.hp))
         mana = min(maxMana, max(0, save.mana))
         monsterHP = min(monsterMaxHP, max(0, save.monsterHP))
@@ -394,6 +408,9 @@ struct GameHomeView: View {
             let stageExp = (30 + (selectedStage - 1) * 15) * (isBossFight ? 5 : 1)
             exp += stageExp
             questKills += 1
+            if mount != "Chưa có thú cưỡi" { mountExp += 1; if mountExp >= mountLevel * 5 { mountExp = 0; mountLevel += 1 } }
+            if wings != "Chưa có cánh" { wingExp += 1; if wingExp >= wingLevel * 5 { wingExp = 0; wingLevel += 1 } }
+            if pet != "Chưa có pet" { petExp += 1; if petExp >= petLevel * 5 { petExp = 0; petLevel += 1 } }
             if !guildName.isEmpty { guildKills += 1 }
             combatMessage = "Hạ quái ải \(selectedStage)! +\(stageExp) EXP"
             if exp >= level * 100 {
@@ -428,7 +445,7 @@ struct GameHomeView: View {
         return level * 10 + bonus + strength * 2 + agility
     }
 
-    var companionPower: Double { (["Linh Hồ": 8, "Cửu Vĩ Thiên Hồ": 18, "Bạch Trạch": 14, "Kim Sí Điểu": 16, "Thanh Long": 24, "Hỏa Phượng": 22, "Ngân Nguyệt Lang": 12, "Bạch Hổ Chiến Thú": 20][pet] ?? 0) + (["Hỏa Linh Châu": 12, "Trấn Yêu Tháp": 18, "Thái Cực Đồ": 22, "Sinh Mệnh Chi Thụ": 25][artifact] ?? 0) }
+    var companionPower: Double { Double(petLevel * 2) + (["Linh Hồ": 8, "Cửu Vĩ Thiên Hồ": 18, "Bạch Trạch": 14, "Kim Sí Điểu": 16, "Thanh Long": 24, "Hỏa Phượng": 22, "Ngân Nguyệt Lang": 12, "Bạch Hổ Chiến Thú": 20][pet] ?? 0) + (["Hỏa Linh Châu": 12, "Trấn Yêu Tháp": 18, "Thái Cực Đồ": 22, "Sinh Mệnh Chi Thụ": 25][artifact] ?? 0) }
 
     var defenseScore: Int {
         let bonus = equippedArmor == "Áo da" ? 15 : 5
@@ -626,7 +643,9 @@ struct GameHomeView: View {
                     if inventory.contains(item) { Button("Mặc \\(item)") { equippedArmor = item } }
                 }
             case .companions:
-                Text("Thú cưỡi: \\(mount)")
+                Text("THÚ CƯỠI: \\(mount)").font(.headline)
+                Text("Cấp \\(mountLevel) • EXP \\(mountExp)/\\(mountLevel * 5) • +\\(mountLevel * 2)% tốc độ tu luyện").font(.caption).foregroundStyle(.cyan)
+                Button("Nuôi dưỡng thú cưỡi (+1 EXP)") { guard currency >= 10, mount != "Chưa có thú cưỡi" else { return }; currency -= 10; mountExp += 1; if mountExp >= mountLevel * 5 { mountExp = 0; mountLevel += 1 } }.disabled(mount == "Chưa có thú cưỡi" || currency < 10)
                 if mount != "Chưa có thú cưỡi" {
                     Button(isMounted ? "Xuống thú cưỡi" : "Lên thú cưỡi") { isMounted.toggle() }
                         .padding(8).background(.orange.opacity(0.3)).clipShape(RoundedRectangle(cornerRadius: 8))
@@ -635,12 +654,16 @@ struct GameHomeView: View {
                     if inventory.contains(item) { Button("Cưỡi \\(item)") { mount = item } }
                 }
                 Divider().overlay(.white.opacity(0.3))
-                Text("Cánh: \\(wings)")
+                Text("CÁNH: \\(wings)").font(.headline)
+                Text("Cấp \\(wingLevel) • EXP \\(wingExp)/\\(wingLevel * 5) • +\\(wingLevel * 3) lực chiến").font(.caption).foregroundStyle(.cyan)
+                Button("Tu luyện cánh (+1 EXP)") { guard currency >= 10, wings != "Chưa có cánh" else { return }; currency -= 10; wingExp += 1; if wingExp >= wingLevel * 5 { wingExp = 0; wingLevel += 1 } }.disabled(wings == "Chưa có cánh" || currency < 10)
                 ForEach(["Phong Vũ Chi Dực", "Phượng Hoàng Thần Dực", "Lưu Quang Tiên Dực", "Cửu Thiên Thần Dực"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Trang bị \\(item)") { wings = item } }
                 }
                 Divider().overlay(.white.opacity(0.3))
-                Text("Pet: \\(pet)")
+                Text("PET: \\(pet)").font(.headline)
+                Text("Cấp \\(petLevel) • EXP \\(petExp)/\\(petLevel * 5) • +\\(petLevel * 2) sức mạnh đồng hành").font(.caption).foregroundStyle(.cyan)
+                Button("Cho pet tu luyện (+1 EXP)") { guard currency >= 10, pet != "Chưa có pet" else { return }; currency -= 10; petExp += 1; if petExp >= petLevel * 5 { petExp = 0; petLevel += 1 } }.disabled(pet == "Chưa có pet" || currency < 10)
                 ForEach(["Linh Hồ", "Cửu Vĩ Thiên Hồ", "Bạch Trạch", "Kim Sí Điểu"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Triệu hồi \\(item)") { pet = item } }
                 }
