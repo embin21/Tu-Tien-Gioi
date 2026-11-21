@@ -23,6 +23,7 @@ struct GameHomeView: View {
     @State private var questKills = 0
     @State private var questClaimed = false
     @State private var mount = "Chưa có thú cưỡi"
+    @State private var isMounted = false
     @State private var wings = "Chưa có cánh"
     @State private var pet = "Chưa có pet"
     @State private var artifact = "Chưa có bảo khí"
@@ -39,7 +40,7 @@ struct GameHomeView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                WorldSceneView(moveX: $moveX, moveY: $moveY, attackPulse: $attackPulse, monsterHitPulse: $monsterHitPulse, monsterDefeated: Binding(get: { monsterHP <= 0 }, set: { _ in }), outfit: outfit, headwear: headwear, auraStyle: aura, wings: wings, mount: mount, pet: pet).ignoresSafeArea()
+                WorldSceneView(moveX: $moveX, moveY: $moveY, attackPulse: $attackPulse, monsterHitPulse: $monsterHitPulse, monsterDefeated: Binding(get: { monsterHP <= 0 }, set: { _ in }), outfit: outfit, headwear: headwear, auraStyle: aura, wings: wings, mount: mount, pet: pet, isMounted: isMounted).ignoresSafeArea()
                 VStack {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
@@ -294,6 +295,10 @@ struct GameHomeView: View {
                 }
             case .companions:
                 Text("Thú cưỡi: \\(mount)")
+                if mount != "Chưa có thú cưỡi" {
+                    Button(isMounted ? "Xuống thú cưỡi" : "Lên thú cưỡi") { isMounted.toggle() }
+                        .padding(8).background(.orange.opacity(0.3)).clipShape(RoundedRectangle(cornerRadius: 8))
+                }
                 ForEach(["Thanh Vân Hạc", "Tử Kim Kỳ Lân", "Ngân Nguyệt Lang", "Thanh Long", "Hỏa Phượng", "Bạch Hổ Chiến Thú"], id: \\.self) { item in
                     if inventory.contains(item) { Button("Cưỡi \\(item)") { mount = item } }
                 }
