@@ -21,6 +21,7 @@ enum GamePanel: String, CaseIterable, Identifiable {
     case bag = "Túi đồ"
     case shop = "Shop"
     case skills = "Kỹ năng"
+    case equipment = "Trang bị"
     var id: String { rawValue }
 }
 
