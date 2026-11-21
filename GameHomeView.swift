@@ -8,7 +8,7 @@ struct GameHomeView: View {
     @State private var hp = 100.0
     @State private var mana = 80.0
     @State private var showMap = false
-    @State private var monsterHP = 120.0
+    @State private var monsterHP = stageMonsterHP.0
     @State private var exp = 0
     @State private var level = 1
     @State private var combatMessage = "Xích Giác xuất hiện!"
@@ -21,6 +21,7 @@ struct GameHomeView: View {
     @State private var vitality = 0
     @State private var intelligence = 0
     @State private var potentialPoints = 50
+    @State private var selectedStage = 1
     @State private var currency = 0
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
@@ -99,8 +100,8 @@ struct GameHomeView: View {
                             VStack(alignment: .trailing, spacing: 5) {
                                 if !lootClaimed {
                                     Button("Nhặt linh thạch +10") {
-                                        currency += 10
-                                        inventory.append("Hỏa linh châu")
+                                        currency += stageCurrency
+                                        inventory.append(stageDropName)
                                         lootClaimed = true
                                         combatMessage = "Nhặt được 10 linh thạch và Hỏa linh châu"
                                     }.font(.caption.bold()).padding(7).background(.cyan.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 8))
@@ -124,7 +125,7 @@ struct GameHomeView: View {
                     }.padding(12).background(.black.opacity(0.72)).clipShape(RoundedRectangle(cornerRadius: 14))
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach([GamePanel.character, .bag, .equipment, .companions, .shop, .quests, .skills, .cosmetics]) { item in
+                            ForEach([GamePanel.character, .stages, .bag, .equipment, .companions, .shop, .quests, .skills, .cosmetics]) { item in
                                 Button { panel = item } label: {
                                     VStack(spacing: 4) {
                                         Image(systemName: panelIcon(item)).font(.system(size: 17, weight: .semibold))
@@ -172,7 +173,7 @@ struct GameHomeView: View {
                         currency += 10
                         inventory.append("Hỏa linh châu")
                         lootClaimed = true
-                        combatMessage = "Tự động nhặt: +10 linh thạch, Hỏa linh châu"
+                        combatMessage = "Nhặt ải \(selectedStage): +\(stageCurrency) linh thạch, \(stageDropName)"
                     } else { respawnMonster() }
                 }
             }
@@ -200,6 +201,7 @@ struct GameHomeView: View {
     private func panelIcon(_ item: GamePanel) -> String {
         switch item {
         case .character: return "person.crop.circle"
+        case .stages: return "flag.fill"
         case .bag: return "bag"
         case .shop: return "storefront"
         case .skills: return "sparkles"
@@ -231,7 +233,7 @@ struct GameHomeView: View {
             wings: wings, pet: pet, artifact: artifact, outfit: outfit,
             headwear: headwear, aura: aura,
             strength: strength, agility: agility, vitality: vitality,
-            intelligence: intelligence, potentialPoints: potentialPoints
+            intelligence: intelligence, potentialPoints: potentialPoints, selectedStage: selectedStage
         )
         do {
             let data = try JSONEncoder().encode(save)
@@ -254,9 +256,10 @@ struct GameHomeView: View {
         vitality = max(0, save.vitality ?? 0)
         intelligence = max(0, save.intelligence ?? 0)
         potentialPoints = max(0, save.potentialPoints ?? 50)
+        selectedStage = min(10, max(1, save.selectedStage ?? 1))
         hp = min(maxHP, max(0, save.hp))
         mana = min(maxMana, max(0, save.mana))
-        monsterHP = min(120, max(0, save.monsterHP))
+        monsterHP = min(stageMonsterHP, max(0, save.monsterHP))
         exp = max(0, save.exp)
         level = max(1, save.level)
         currency = max(0, save.currency)
@@ -371,9 +374,10 @@ struct GameHomeView: View {
         monsterHP = max(0, monsterHP - finalDamage)
         if monsterHP == 0 {
             lootClaimed = false
-            exp += 30
+            let stageExp = 30 + (selectedStage - 1) * 15
+            exp += stageExp
             questKills += 1
-            combatMessage = "Hạ quái! +30 EXP"
+            combatMessage = "Hạ quái ải \(selectedStage)! +\(stageExp) EXP"
             if exp >= level * 100 {
                 exp -= level * 100
                 level += 1
@@ -382,6 +386,18 @@ struct GameHomeView: View {
             }
         } else {
             combatMessage = "Gây \\(Int(finalDamage)) sát thương"
+        }
+    }
+
+    var stageMonsterHP: Double { 120 + Double(selectedStage - 1) * 60 }
+    var stageCurrency: Int { 10 + (selectedStage - 1) * 5 }
+    var stageDropName: String {
+        switch selectedStage {
+        case 1...2: return "Hỏa linh châu"
+        case 3...4: return "Thanh tâm thạch"
+        case 5...6: return "Băng phách tinh"
+        case 7...8: return "Thiên kiếm mảnh"
+        default: return "Cửu u tiên tinh"
         }
     }
 
@@ -449,6 +465,26 @@ struct GameHomeView: View {
                 Button("Đột phá cảnh giới (100 EXP)") { breakthrough() }
                     .disabled(exp < 100 || realmIndex >= realms.count - 1)
                     .padding(9).background(.purple.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 9))
+            case .stages:
+                Text("Chọn ải • Quái mạnh dần, phần thưởng tăng theo cấp").font(.caption).foregroundStyle(.secondary)
+                ForEach(1...10, id: \.self) { stage in
+                    Button {
+                        selectedStage = stage
+                        monsterHP = stageMonsterHP
+                        lootClaimed = false
+                        combatMessage = "Bắt đầu Ải \(stage) • HP quái \(Int(stageMonsterHP))"
+                        panel = nil
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Ải \(stage) • \(stage < 3 ? "Tân thủ" : stage < 5 ? "Trung cấp" : stage < 8 ? "Cao cấp" : "Tiên giới")").bold()
+                                Text("Quái: \(Int(120 + Double(stage - 1) * 60)) HP • +\(30 + (stage - 1) * 15) EXP • +\(10 + (stage - 1) * 5) linh thạch").font(.caption2).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if selectedStage == stage { Image(systemName: "checkmark.circle.fill").foregroundStyle(.green) }
+                        }.padding(9).background(.white.opacity(0.07)).clipShape(RoundedRectangle(cornerRadius: 9))
+                    }.buttonStyle(.plain)
+                }
             case .bag:
                 Text("Túi đồ (\(inventory.count)/40)").font(.headline)
                 if inventory.isEmpty {
