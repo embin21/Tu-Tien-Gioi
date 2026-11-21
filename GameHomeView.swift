@@ -39,7 +39,7 @@ struct GameHomeView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                WorldSceneView(moveX: $moveX, moveY: $moveY, attackPulse: $attackPulse, monsterHitPulse: $monsterHitPulse, monsterDefeated: Binding(get: { monsterHP <= 0 }, set: { _ in })).ignoresSafeArea()
+                WorldSceneView(moveX: $moveX, moveY: $moveY, attackPulse: $attackPulse, monsterHitPulse: $monsterHitPulse, monsterDefeated: Binding(get: { monsterHP <= 0 }, set: { _ in }), outfit: outfit, headwear: headwear, auraStyle: aura, wings: wings, mount: mount, pet: pet).ignoresSafeArea()
                 VStack {
                     HStack(spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
