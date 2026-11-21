@@ -14,6 +14,8 @@ struct GameHomeView: View {
     @State private var combatMessage = "Xích Giác xuất hiện!"
     @State private var attackPulse = 0
     @State private var monsterHitPulse = 0
+    @State private var shieldCharges = 0
+    @State private var dodgeCharges = 0
     @State private var currency = 0
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
@@ -153,9 +155,17 @@ struct GameHomeView: View {
             if !isRestoringSave { saveGame() }
         }
         .onChange(of: monsterHitPulse) { _ in
-            let incomingDamage = profile.sect == "Võ Tông" ? 5.0 : 8.0
-            hp = max(0, hp - incomingDamage)
-            combatMessage = "Quái phản công! -\\(Int(incomingDamage)) HP"
+            if dodgeCharges > 0 {
+                dodgeCharges -= 1
+                combatMessage = "Mê Tung Bộ né được đòn tấn công!"
+            } else if shieldCharges > 0 {
+                shieldCharges -= 1
+                combatMessage = "Lá chắn đã hấp thụ đòn đánh!"
+            } else {
+                let incomingDamage = profile.sect == "Võ Tông" ? 5.0 : 8.0
+                hp = max(0, hp - incomingDamage)
+                combatMessage = "Quái phản công! -\\(Int(incomingDamage)) HP"
+            }
         }
         .preferredColorScheme(.dark)
     }
@@ -239,8 +249,13 @@ struct GameHomeView: View {
     func skillButton(_ symbol: String, title: String) -> some View {
         let skill = classSkill(for: title)
         return Button {
+            if skill.name == "Kiếm Tâm Hộ Thể" || skill.name == "Thiết Bố Sam" || skill.name == "Long Tượng Bá Thể" {
+                shieldCharges = min(2, shieldCharges + (skill.name == "Long Tượng Bá Thể" ? 2 : 1))
+            }
+            if skill.name == "Mê Tung Bộ" { dodgeCharges = min(2, dodgeCharges + 1) }
+            if skill.name == "Tinh Hà Bạo" { mana = min(maxMana, mana + 12) }
             attackMonster(damage: skill.damage + Double(powerScore) * 0.15 + companionPower, manaCost: skill.mana)
-            if monsterHP > 0 { combatMessage = "\(skill.name)! " + combatMessage }
+            if monsterHP > 0 { combatMessage = "\\(skill.name)! " + combatMessage }
         } label: {
             VStack(spacing: 2) {
                 Text(symbol).font(.title2)
@@ -352,6 +367,8 @@ struct GameHomeView: View {
                 Text("Nội tại: \\(classPassive.title)").font(.headline).foregroundStyle(.cyan)
                 Text(classStatDescription).font(.caption).foregroundStyle(.secondary)
                 Text(classPassive.detail).font(.caption).foregroundStyle(.secondary)
+                if shieldCharges > 0 { Text("Lá chắn: \\(shieldCharges) lần chặn").font(.caption).foregroundStyle(.cyan) }
+                if dodgeCharges > 0 { Text("Né tránh: \\(dodgeCharges) lần").font(.caption).foregroundStyle(.green) }
                 Text("Cấp độ: \(level)  •  EXP: \(exp)/\(level * 100)")
                 Text("Cảnh giới: \(realms[realmIndex])")
                 Button("Đột phá cảnh giới (100 EXP)") { breakthrough() }
