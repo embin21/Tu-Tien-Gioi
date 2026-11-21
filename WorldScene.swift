@@ -14,6 +14,7 @@ struct WorldSceneView: UIViewRepresentable {
     var mount: String
     var pet: String
     var isMounted: Bool
+    var selectedRegion: String
 
     func makeUIView(context: Context) -> SCNView {
         let view = SCNView()
@@ -24,9 +25,9 @@ struct WorldSceneView: UIViewRepresentable {
         view.antialiasingMode = .multisampling4X
         view.preferredFramesPerSecond = 60
 
-        scene.rootNode.addChildNode(makeGround())
+        scene.rootNode.addChildNode(makeGround(region: selectedRegion))
         addWorld(to: scene.rootNode)
-        let monster = makeMonster()
+        let monster = makeMonster(region: selectedRegion)
         monster.name = "monster"
         monster.position = SCNVector3(2.2, 0, -1.8)
         scene.rootNode.addChildNode(monster)
@@ -69,6 +70,7 @@ struct WorldSceneView: UIViewRepresentable {
             context.coordinator.petNode = pet
         }
         context.coordinator.monster = monster
+        context.coordinator.currentRegion = selectedRegion
         context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet, mounted: isMounted)
         return view
     }
@@ -76,6 +78,10 @@ struct WorldSceneView: UIViewRepresentable {
     func updateUIView(_ uiView: SCNView, context: Context) {
         guard let player = context.coordinator.player else { return }
         context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet, mounted: isMounted)
+        if selectedRegion != context.coordinator.currentRegion {
+            context.coordinator.currentRegion = selectedRegion
+            context.coordinator.applyRegion(selectedRegion)
+        }
         if attackPulse != context.coordinator.lastAttackPulse {
             context.coordinator.lastAttackPulse = attackPulse
             if let monster = context.coordinator.monster {
@@ -154,6 +160,28 @@ struct WorldSceneView: UIViewRepresentable {
         var lastMonsterHit = Date.distantPast
         var lootShown = false
         var lastAppearance = ""
+        var currentRegion = ""
+
+        func applyRegion(_ region: String) {
+            let palettes: [String: (UIColor, UIColor, UIColor)] = [
+                "Tân Thủ Thôn": (UIColor(red: 0.28, green: 0.43, blue: 0.27, alpha: 1), UIColor(red: 0.48, green: 0.32, blue: 0.22, alpha: 1), .orange),
+                "Thanh Vân Đại Điện": (UIColor(red: 0.38, green: 0.39, blue: 0.48, alpha: 1), .systemRed, .systemYellow),
+                "Hỏa Diệm Cốc": (UIColor(red: 0.30, green: 0.12, blue: 0.09, alpha: 1), .systemOrange, .yellow),
+                "Băng Phong Cốc": (UIColor(red: 0.55, green: 0.72, blue: 0.82, alpha: 1), .systemTeal, .cyan),
+                "Lạc Hà Cốc": (UIColor(red: 0.48, green: 0.25, blue: 0.22, alpha: 1), .systemPink, .orange),
+                "Yêu Thú Sâm Lâm": (UIColor(red: 0.12, green: 0.30, blue: 0.18, alpha: 1), .systemGreen, .green),
+                "Thiên Kiếm Di Tích": (UIColor(red: 0.32, green: 0.34, blue: 0.42, alpha: 1), .systemGray, .cyan),
+                "Cửu U Ma Vực": (UIColor(red: 0.15, green: 0.09, blue: 0.20, alpha: 1), .systemPurple, .purple),
+                "Phi Thăng Tiên Giới": (UIColor(red: 0.62, green: 0.70, blue: 0.82, alpha: 1), .systemYellow, .white)
+            ]
+            let palette = palettes[region] ?? (UIColor(red: 0.22, green: 0.28, blue: 0.25, alpha: 1), .systemRed, .orange)
+            scene?.rootNode.childNode(withName: "regionGround", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = palette.0
+            monster?.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.diffuse.contents = palette.1
+            monster?.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.emission.contents = palette.2.withAlphaComponent(0.18)
+            monster?.childNodes.filter { $0.geometry != nil }.forEach { node in
+                if node.geometry is SCNTorus { node.geometry?.firstMaterial?.diffuse.contents = palette.2 }
+            }
+        }
 
         func applyAppearance(outfit: String, headwear: String, auraStyle: String, wings: String, mount: String, pet: String, mounted: Bool) {
             let key = [outfit, headwear, auraStyle, wings, mount, pet, String(mounted)].joined(separator: "|")
@@ -210,10 +238,20 @@ struct WorldSceneView: UIViewRepresentable {
         return m
     }
 
-    private func makeGround() -> SCNNode {
+    private func makeGround(region: String) -> SCNNode {
+        let palettes: [String: UIColor] = [
+            "Hỏa Diệm Cốc": UIColor(red: 0.30, green: 0.12, blue: 0.09, alpha: 1),
+            "Băng Phong Cốc": UIColor(red: 0.55, green: 0.72, blue: 0.82, alpha: 1),
+            "Lạc Hà Cốc": UIColor(red: 0.48, green: 0.25, blue: 0.22, alpha: 1),
+            "Yêu Thú Sâm Lâm": UIColor(red: 0.12, green: 0.30, blue: 0.18, alpha: 1),
+            "Thiên Kiếm Di Tích": UIColor(red: 0.32, green: 0.34, blue: 0.42, alpha: 1),
+            "Cửu U Ma Vực": UIColor(red: 0.15, green: 0.09, blue: 0.20, alpha: 1),
+            "Phi Thăng Tiên Giới": UIColor(red: 0.62, green: 0.70, blue: 0.82, alpha: 1)
+        ]
         let plane = SCNPlane(width: 30, height: 30)
-        plane.firstMaterial = material(UIColor(red: 0.22, green: 0.28, blue: 0.25, alpha: 1))
+        plane.firstMaterial = material(palettes[region] ?? UIColor(red: 0.22, green: 0.28, blue: 0.25, alpha: 1))
         let node = SCNNode(geometry: plane)
+        node.name = "regionGround"
         node.eulerAngles.x = -.pi / 2
         node.position.y = -0.08
 
@@ -454,9 +492,15 @@ struct WorldSceneView: UIViewRepresentable {
         return root
     }
 
-    private func makeMonster() -> SCNNode {
+    private func makeMonster(region: String) -> SCNNode {
         let root = SCNNode()
-        let red = UIColor(red: 0.72, green: 0.16, blue: 0.12, alpha: 1)
+        let monsterColors: [String: UIColor] = [
+            "Hỏa Diệm Cốc": .systemOrange, "Băng Phong Cốc": .systemTeal,
+            "Lạc Hà Cốc": .systemPink, "Yêu Thú Sâm Lâm": .systemGreen,
+            "Thiên Kiếm Di Tích": .systemGray, "Cửu U Ma Vực": .systemPurple,
+            "Phi Thăng Tiên Giới": .systemYellow
+        ]
+        let red = monsterColors[region] ?? UIColor(red: 0.72, green: 0.16, blue: 0.12, alpha: 1)
         let dark = UIColor(red: 0.22, green: 0.10, blue: 0.10, alpha: 1)
         let gold = UIColor(red: 1.0, green: 0.72, blue: 0.22, alpha: 1)
         let body = SCNSphere(radius: 0.52)
