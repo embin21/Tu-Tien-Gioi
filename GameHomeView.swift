@@ -20,7 +20,7 @@ struct GameHomeView: View {
     @State private var agility = 0
     @State private var vitality = 0
     @State private var intelligence = 0
-    @State private var potentialPoints = 5
+    @State private var potentialPoints = 50
     @State private var currency = 0
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
@@ -253,7 +253,7 @@ struct GameHomeView: View {
         agility = max(0, save.agility ?? 0)
         vitality = max(0, save.vitality ?? 0)
         intelligence = max(0, save.intelligence ?? 0)
-        potentialPoints = max(0, save.potentialPoints ?? 5)
+        potentialPoints = max(0, save.potentialPoints ?? 50)
         hp = min(maxHP, max(0, save.hp))
         mana = min(maxMana, max(0, save.mana))
         monsterHP = min(120, max(0, save.monsterHP))
@@ -377,7 +377,8 @@ struct GameHomeView: View {
             if exp >= level * 100 {
                 exp -= level * 100
                 level += 1
-                combatMessage = "Lên cấp! Lv.\\(level)"
+                potentialPoints += 5
+                combatMessage = "Lên cấp! Lv.\\(level) • +5 điểm tiềm năng"
             }
         } else {
             combatMessage = "Gây \\(Int(finalDamage)) sát thương"
