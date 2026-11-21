@@ -52,6 +52,15 @@ struct GameHomeView: View {
                             meter("MP", value: mana / 100, color: .blue)
                         }.padding(10).background(.black.opacity(0.62)).clipShape(RoundedRectangle(cornerRadius: 12))
                         Spacer()
+                        if selectedRegion == "Tân Thủ Thôn" || selectedRegion == "Thanh Vân Đại Điện" {
+                            Button { panel = .quests } label: {
+                                VStack(spacing: 3) {
+                                    Image(systemName: "person.fill")
+                                    Text("Trưởng lão").font(.system(size: 9, weight: .bold))
+                                }.foregroundStyle(.white).frame(width: 64, height: 64)
+                                    .background(.purple.opacity(0.75)).clipShape(RoundedRectangle(cornerRadius: 14))
+                            }
+                        }
                         Button { showMap.toggle() } label: {
                             ZStack {
                                 Circle().fill(.black.opacity(0.65))
@@ -419,20 +428,23 @@ struct GameHomeView: View {
                     }
                 }
             case .quests:
-                Text("NPC: Trưởng lão Thanh Vân").font(.headline)
-                Text("Nhiệm vụ: Đánh bại 3 Xích Giác")
+                Text("🧙 Trưởng lão Thanh Vân").font(.headline)
+                Text(selectedRegion == "Tân Thủ Thôn" || selectedRegion == "Thanh Vân Đại Điện" ? "Chào đạo hữu! Hãy rèn luyện tại các khu vực bên ngoài rồi quay về báo tin." : "Quái tại khu vực này đang hoành hành. Hãy giúp môn phái dọn đường tu luyện.")
+                    .multilineTextAlignment(.center)
+                Text("Nhiệm vụ môn phái: Đánh bại 3 quái")
+                ProgressView(value: Double(min(questKills, 3)), total: 3).tint(.green)
                 Text("Tiến độ: \\(min(questKills, 3))/3")
                 if questKills >= 3 && !questClaimed {
                     Button("Nhận thưởng: 60 EXP + 30 linh thạch") {
                         exp += 60
                         currency += 30
                         questClaimed = true
-                        combatMessage = "Hoàn thành nhiệm vụ! +60 EXP, +30 linh thạch"
+                        combatMessage = "Trưởng lão ban thưởng: +60 EXP, +30 linh thạch"
                     }.padding(8).background(.green.opacity(0.3)).clipShape(RoundedRectangle(cornerRadius: 8))
                 } else if questClaimed {
-                    Text("Đã nhận thưởng. Nhiệm vụ hoàn thành!")
+                    Text("Nhiệm vụ đã hoàn thành. Hãy tiếp tục hành trình!")
                 } else {
-                    Text("Hãy tiếp tục săn Xích Giác để hoàn thành nhiệm vụ.")
+                    Text("Hãy đánh bại thêm \\(3 - min(questKills, 3)) quái để nhận thưởng.")
                 }
             case .skills:
                 Text("Đánh thường  •  Kiếm khí  •  Hộ thể  •  Phi hành")
