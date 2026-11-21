@@ -64,4 +64,5 @@ struct GameSave: Codable {
     var vitality: Int? = nil
     var intelligence: Int? = nil
     var potentialPoints: Int? = nil
+    var selectedStage: Int? = nil
 }
