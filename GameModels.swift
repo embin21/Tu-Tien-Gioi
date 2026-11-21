@@ -34,3 +34,29 @@ struct PlayerProfile: Codable {
     var sect: String
     var level: Int = 1
 }
+
+
+// Versioned local save data for Stage 15.
+struct GameSave: Codable {
+    var hp: Double
+    var mana: Double
+    var monsterHP: Double
+    var exp: Int
+    var level: Int
+    var currency: Int
+    var lootClaimed: Bool
+    var inventory: [String]
+    var realmIndex: Int
+    var equippedWeapon: String
+    var equippedArmor: String
+    var questKills: Int
+    var questClaimed: Bool
+    var mount: String
+    var isMounted: Bool
+    var wings: String
+    var pet: String
+    var artifact: String
+    var outfit: String
+    var headwear: String
+    var aura: String
+}
