@@ -93,7 +93,7 @@ struct WorldSceneView: UIViewRepresentable {
         }
 
         let input = hypot(moveX, moveY)
-        if let monster = context.coordinator.monster, !monsterDefeated {
+        if let monster = context.coordinator.monster, !monsterDefeated, !context.coordinator.isSafeRegion {
             let dx = player.position.x - monster.position.x
             let dz = player.position.z - monster.position.z
             let distance = hypot(dx, dz)
@@ -161,8 +161,15 @@ struct WorldSceneView: UIViewRepresentable {
         var lootShown = false
         var lastAppearance = ""
         var currentRegion = ""
+        var isSafeRegion = false
 
         func applyRegion(_ region: String) {
+            isSafeRegion = region == "Tân Thủ Thôn" || region == "Thanh Vân Đại Điện"
+            monster?.isHidden = isSafeRegion
+            monster?.removeAllActions()
+            if !isSafeRegion {
+                monster?.runAction(.repeatForever(.sequence([.moveBy(x: 0, y: 0.10, z: 0, duration: 0.8), .moveBy(x: 0, y: -0.10, z: 0, duration: 0.8)])))
+            }
             let palettes: [String: (UIColor, UIColor, UIColor)] = [
                 "Tân Thủ Thôn": (UIColor(red: 0.28, green: 0.43, blue: 0.27, alpha: 1), UIColor(red: 0.48, green: 0.32, blue: 0.22, alpha: 1), .orange),
                 "Thanh Vân Đại Điện": (UIColor(red: 0.38, green: 0.39, blue: 0.48, alpha: 1), .systemRed, .systemYellow),
