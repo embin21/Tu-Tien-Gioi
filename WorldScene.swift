@@ -13,6 +13,7 @@ struct WorldSceneView: UIViewRepresentable {
     var wings: String
     var mount: String
     var pet: String
+    var isMounted: Bool
 
     func makeUIView(context: Context) -> SCNView {
         let view = SCNView()
@@ -62,14 +63,15 @@ struct WorldSceneView: UIViewRepresentable {
         context.coordinator.player = player
         context.coordinator.body = player.childNode(withName: "body", recursively: true)
         context.coordinator.head = player.childNode(withName: "head", recursively: true)
+        context.coordinator.petNode = player.childNode(withName: "petRoot", recursively: true)
         context.coordinator.monster = monster
-        context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet)
+        context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet, mounted: isMounted)
         return view
     }
 
     func updateUIView(_ uiView: SCNView, context: Context) {
         guard let player = context.coordinator.player else { return }
-        context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet)
+        context.coordinator.applyAppearance(outfit: outfit, headwear: headwear, auraStyle: auraStyle, wings: wings, mount: mount, pet: pet, mounted: isMounted)
         if attackPulse != context.coordinator.lastAttackPulse {
             context.coordinator.lastAttackPulse = attackPulse
             if let monster = context.coordinator.monster {
