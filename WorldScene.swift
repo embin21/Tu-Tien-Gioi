@@ -5,6 +5,8 @@ struct WorldSceneView: UIViewRepresentable {
     @Binding var moveX: CGFloat
     @Binding var moveY: CGFloat
     @Binding var attackPulse: Int
+    @Binding var monsterHitPulse: Int
+    @Binding var monsterDefeated: Bool
 
     func makeUIView(context: Context) -> SCNView {
         let view = SCNView()
@@ -68,7 +70,44 @@ struct WorldSceneView: UIViewRepresentable {
                 monster.runAction(.sequence([.wait(duration: 0.16), .run { node in node.childNode(withName: "body", recursively: true)?.geometry?.firstMaterial?.emission.contents = UIColor.black }]), forKey: "flash")
             }
         }
+
         let input = hypot(moveX, moveY)
+        if let monster = context.coordinator.monster, !monsterDefeated {
+            let dx = player.position.x - monster.position.x
+            let dz = player.position.z - monster.position.z
+            let distance = hypot(dx, dz)
+            if distance > 1.25 {
+                let step: Float = 0.018
+                monster.position.x += dx / max(distance, 0.001) * step
+                monster.position.z += dz / max(distance, 0.001) * step
+                monster.eulerAngles.y = atan2(dx, dz)
+            } else if Date().timeIntervalSince(context.coordinator.lastMonsterHit) > 1.8 {
+                context.coordinator.lastMonsterHit = Date()
+                DispatchQueue.main.async { monsterHitPulse += 1 }
+                monster.runAction(.sequence([.moveBy(x: 0, y: 0, z: 0.18, duration: 0.12), .moveBy(x: 0, y: 0, z: -0.18, duration: 0.12)]))
+            }
+        }
+        if monsterDefeated && !context.coordinator.lootShown {
+            context.coordinator.lootShown = true
+            if let scene = context.coordinator.scene {
+                let loot = SCNSphere(radius: 0.20)
+                loot.firstMaterial = material(.cyan, roughness: 0.25, emission: .cyan)
+                let drop = SCNNode(geometry: loot)
+                drop.name = "lootDrop"
+                drop.position = SCNVector3(2.2, 0.28, -1.8)
+                scene.rootNode.addChildNode(drop)
+                drop.runAction(.repeatForever(.sequence([.moveBy(x: 0, y: 0.16, z: 0, duration: 0.5), .moveBy(x: 0, y: -0.16, z: 0, duration: 0.5)])))
+            }
+        } else if !monsterDefeated && context.coordinator.lootShown {
+            context.coordinator.scene?.rootNode.childNode(withName: "lootDrop", recursively: true)?.removeFromParentNode()
+            context.coordinator.lootShown = false
+        }
+        if attackPulse != context.coordinator.lastAttackPulse {
+            context.coordinator.lastAttackPulse = attackPulse
+            if let body = context.coordinator.body {
+                body.runAction(.sequence([.rotateBy(x: 0, y: 0, z: -0.75, duration: 0.08), .rotateBy(x: 0, y: 0, z: 1.25, duration: 0.12), .rotateBy(x: 0, y: 0, z: -0.5, duration: 0.08)]), forKey: "swordSwing")
+            }
+        }
         if input > 0.08 {
             let speed: Float = 0.105
             player.position.x += Float(moveX) * speed
@@ -101,6 +140,8 @@ struct WorldSceneView: UIViewRepresentable {
         var isWalking = false
         var monster: SCNNode?
         var lastAttackPulse = 0
+        var lastMonsterHit = Date.distantPast
+        var lootShown = false
     }
 
     private func material(_ color: UIColor, roughness: CGFloat = 0.85, emission: UIColor? = nil) -> SCNMaterial {
