@@ -18,6 +18,7 @@ enum Sect: String, CaseIterable, Identifiable {
 
 enum GamePanel: String, CaseIterable, Identifiable {
     case character = "Nhân vật"
+    case guild = "Bang hội"
     case bag = "Túi đồ"
     case shop = "Shop"
     case skills = "Kỹ năng"
@@ -66,4 +67,10 @@ struct GameSave: Codable {
     var potentialPoints: Int? = nil
     var selectedStage: Int? = nil
     var isBossFight: Bool? = nil
+    var guildName: String? = nil
+    var guildLevel: Int? = nil
+    var guildExp: Int? = nil
+    var guildContribution: Int? = nil
+    var guildKills: Int? = nil
+    var guildTaskClaimed: Bool? = nil
 }
