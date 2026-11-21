@@ -553,6 +553,80 @@ struct WorldSceneView: UIViewRepresentable {
         beamNode.position = SCNVector3(0, 3.0, -7.0)
         root.addChildNode(beamNode)
 
+        // Beginner village: small wooden houses, tiled roofs and warm windows.
+        for i in 0..<4 {
+            let x = Float(i % 2 == 0 ? -1 : 1) * (5.0 + Float(i / 2) * 1.2)
+            let z = Float(i < 2 ? 3.8 : 6.0)
+            let wall = SCNBox(width: 2.0, height: 1.45, length: 1.65, chamferRadius: 0.06)
+            wall.firstMaterial = material(UIColor(red: 0.66, green: 0.43, blue: 0.27, alpha: 1))
+            let house = SCNNode(geometry: wall)
+            house.position = SCNVector3(x, 0.78, z)
+            root.addChildNode(house)
+
+            let roof = SCNPyramid(width: 2.45, height: 0.95, length: 2.05)
+            roof.firstMaterial = material(UIColor(red: 0.35, green: 0.16, blue: 0.13, alpha: 1))
+            let roofNode = SCNNode(geometry: roof)
+            roofNode.position = SCNVector3(x, 1.92, z)
+            roofNode.scale = SCNVector3(1, 0.72, 1)
+            root.addChildNode(roofNode)
+
+            let door = SCNBox(width: 0.42, height: 0.78, length: 0.06, chamferRadius: 0.025)
+            door.firstMaterial = material(UIColor(red: 0.22, green: 0.10, blue: 0.07, alpha: 1))
+            let doorNode = SCNNode(geometry: door)
+            doorNode.position = SCNVector3(x, 0.40, z + 0.84)
+            root.addChildNode(doorNode)
+
+            let window = SCNSphere(radius: 0.12)
+            window.firstMaterial = material(.orange, roughness: 0.25, emission: .orange)
+            for side in [-1, 1] {
+                let w = SCNNode(geometry: window)
+                w.position = SCNVector3(x + Float(side) * 0.62, 0.98, z + 0.86)
+                root.addChildNode(w)
+            }
+        }
+
+        // Thanh Van sect main hall: raised stone steps, red pillars and golden roof.
+        let hallBase = SCNBox(width: 6.2, height: 0.42, length: 3.8, chamferRadius: 0.08)
+        hallBase.firstMaterial = material(UIColor(red: 0.52, green: 0.53, blue: 0.58, alpha: 1))
+        let baseNode = SCNNode(geometry: hallBase)
+        baseNode.position = SCNVector3(0, 0.18, -10.0)
+        root.addChildNode(baseNode)
+
+        for step in 0..<3 {
+            let stair = SCNBox(width: 3.0 + CGFloat(step) * 0.8, height: 0.16, length: 0.42, chamferRadius: 0.025)
+            stair.firstMaterial = material(UIColor(red: 0.62, green: 0.63, blue: 0.68, alpha: 1))
+            let stairNode = SCNNode(geometry: stair)
+            stairNode.position = SCNVector3(0, 0.12 + Float(step) * 0.13, -7.7 - Float(step) * 0.42)
+            root.addChildNode(stairNode)
+        }
+
+        for side in [-1, 1] {
+            let pillar = SCNCylinder(radius: 0.16, height: 2.7)
+            pillar.firstMaterial = material(UIColor(red: 0.58, green: 0.16, blue: 0.12, alpha: 1))
+            let p = SCNNode(geometry: pillar)
+            p.position = SCNVector3(Float(side) * 2.35, 1.55, -10.0)
+            root.addChildNode(p)
+        }
+
+        let hallBody = SCNBox(width: 5.0, height: 1.8, length: 2.5, chamferRadius: 0.04)
+        hallBody.firstMaterial = material(UIColor(red: 0.48, green: 0.18, blue: 0.14, alpha: 1))
+        let hallNode = SCNNode(geometry: hallBody)
+        hallNode.position = SCNVector3(0, 1.25, -10.0)
+        root.addChildNode(hallNode)
+
+        let hallRoof = SCNPyramid(width: 6.0, height: 1.25, length: 3.3)
+        hallRoof.firstMaterial = material(UIColor(red: 0.82, green: 0.58, blue: 0.18, alpha: 1))
+        let hallRoofNode = SCNNode(geometry: hallRoof)
+        hallRoofNode.position = SCNVector3(0, 2.65, -10.0)
+        hallRoofNode.scale = SCNVector3(1, 0.68, 1)
+        root.addChildNode(hallRoofNode)
+
+        let hallSign = SCNBox(width: 1.25, height: 0.42, length: 0.08, chamferRadius: 0.04)
+        hallSign.firstMaterial = material(UIColor(red: 0.16, green: 0.10, blue: 0.07, alpha: 1))
+        let signNode = SCNNode(geometry: hallSign)
+        signNode.position = SCNVector3(0, 2.0, -8.70)
+        root.addChildNode(signNode)
+
         // Floating cultivation crystals as landmarks.
         for i in 0..<4 {
             let crystal = SCNPyramid(width: 0.55, height: 0.9, length: 0.55)
