@@ -235,6 +235,7 @@ struct WorldSceneView: UIViewRepresentable {
         let aura = SCNTorus(ringRadius: 0.52, pipeRadius: 0.025)
         aura.firstMaterial = material(.cyan, roughness: 0.3, emission: .cyan)
         let auraNode = SCNNode(geometry: aura)
+        auraNode.name = "cosmeticAura"
         auraNode.eulerAngles.x = -.pi / 2
         auraNode.position.y = 0.03
         root.addChildNode(auraNode)
