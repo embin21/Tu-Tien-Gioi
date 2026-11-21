@@ -23,6 +23,12 @@ struct GameHomeView: View {
     @State private var potentialPoints = 50
     @State private var selectedStage = 1
     @State private var isBossFight = false
+    @State private var guildName = ""
+    @State private var guildLevel = 1
+    @State private var guildExp = 0
+    @State private var guildContribution = 0
+    @State private var guildKills = 0
+    @State private var guildTaskClaimed = false
     @State private var currency = 0
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
@@ -126,7 +132,7 @@ struct GameHomeView: View {
                     }.padding(12).background(.black.opacity(0.72)).clipShape(RoundedRectangle(cornerRadius: 14))
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach([GamePanel.character, .stages, .bag, .equipment, .companions, .shop, .quests, .skills, .cosmetics]) { item in
+                            ForEach([GamePanel.character, .stages, .guild, .bag, .equipment, .companions, .shop, .quests, .skills, .cosmetics]) { item in
                                 Button { panel = item } label: {
                                     VStack(spacing: 4) {
                                         Image(systemName: panelIcon(item)).font(.system(size: 17, weight: .semibold))
@@ -202,6 +208,7 @@ struct GameHomeView: View {
     private func panelIcon(_ item: GamePanel) -> String {
         switch item {
         case .character: return "person.crop.circle"
+        case .guild: return "person.3.fill"
         case .stages: return "flag.fill"
         case .bag: return "bag"
         case .shop: return "storefront"
@@ -234,7 +241,9 @@ struct GameHomeView: View {
             wings: wings, pet: pet, artifact: artifact, outfit: outfit,
             headwear: headwear, aura: aura,
             strength: strength, agility: agility, vitality: vitality,
-            intelligence: intelligence, potentialPoints: potentialPoints, selectedStage: selectedStage, isBossFight: isBossFight
+            intelligence: intelligence, potentialPoints: potentialPoints, selectedStage: selectedStage, isBossFight: isBossFight,
+            guildName: guildName, guildLevel: guildLevel, guildExp: guildExp,
+            guildContribution: guildContribution, guildKills: guildKills, guildTaskClaimed: guildTaskClaimed
         )
         do {
             let data = try JSONEncoder().encode(save)
@@ -259,6 +268,12 @@ struct GameHomeView: View {
         potentialPoints = max(0, save.potentialPoints ?? 50)
         selectedStage = min(10, max(1, save.selectedStage ?? 1))
         isBossFight = save.isBossFight ?? false
+        guildName = save.guildName ?? ""
+        guildLevel = max(1, save.guildLevel ?? 1)
+        guildExp = max(0, save.guildExp ?? 0)
+        guildContribution = max(0, save.guildContribution ?? 0)
+        guildKills = max(0, save.guildKills ?? 0)
+        guildTaskClaimed = save.guildTaskClaimed ?? false
         hp = min(maxHP, max(0, save.hp))
         mana = min(maxMana, max(0, save.mana))
         monsterHP = min(monsterMaxHP, max(0, save.monsterHP))
@@ -379,6 +394,7 @@ struct GameHomeView: View {
             let stageExp = (30 + (selectedStage - 1) * 15) * (isBossFight ? 5 : 1)
             exp += stageExp
             questKills += 1
+            if !guildName.isEmpty { guildKills += 1 }
             combatMessage = "Hạ quái ải \(selectedStage)! +\(stageExp) EXP"
             if exp >= level * 100 {
                 exp -= level * 100
@@ -509,8 +525,45 @@ struct GameHomeView: View {
                         }.padding(9).background(.white.opacity(0.07)).clipShape(RoundedRectangle(cornerRadius: 9))
                     }.buttonStyle(.plain)
                 }
+            case .guild:
+                VStack(alignment: .leading, spacing: 10) {
+                    if guildName.isEmpty {
+                        Text("Bạn chưa thuộc bang hội.").foregroundStyle(.secondary)
+                        Text("Gia nhập Thanh Vân Các để nhận nhiệm vụ và tích lũy cống hiến.").font(.caption)
+                        Button("Gia nhập Thanh Vân Các") {
+                            guildName = "Thanh Vân Các"
+                            guildKills = 0
+                            guildTaskClaimed = false
+                            combatMessage = "Đã gia nhập bang hội Thanh Vân Các!"
+                        }.buttonStyle(.borderedProminent).tint(.purple)
+                    } else {
+                        Text("🏯 \\(guildName)").font(.title3.bold())
+                        Text("Cấp bang: \\(guildLevel) • EXP bang: \\(guildExp)/\\(guildLevel * 100)")
+                        Text("Cống hiến cá nhân: \\(guildContribution)")
+                        Text("Thành viên: Bạn, Thanh Vân Trưởng Lão, Linh Hồ, Kiếm Khách • (NPC minh họa)").font(.caption).foregroundStyle(.secondary)
+                        Button("Cống hiến 50 linh thạch (+50 EXP bang)") {
+                            guard currency >= 50 else { combatMessage = "Cần 50 linh thạch để cống hiến"; return }
+                            currency -= 50
+                            guildExp += 50
+                            guildContribution += 50
+                            if guildExp >= guildLevel * 100 { guildExp -= guildLevel * 100; guildLevel += 1 }
+                            combatMessage = "Cống hiến bang hội thành công!"
+                        }.buttonStyle(.bordered).tint(.orange)
+                        Divider()
+                        Text("NHIỆM VỤ BANG HỘI").font(.headline).foregroundStyle(.yellow)
+                        Text("Đánh bại 5 quái • Tiến độ: \\(min(guildKills, 5))/5")
+                        Button(guildTaskClaimed ? "Đã nhận thưởng" : "Nhận thưởng: 100 EXP + 30 linh thạch") {
+                            guard guildKills >= 5 && !guildTaskClaimed else { return }
+                            guildTaskClaimed = true
+                            exp += 100
+                            currency += 30
+                            guildContribution += 20
+                            combatMessage = "Hoàn thành nhiệm vụ bang hội!"
+                        }.disabled(guildKills < 5 || guildTaskClaimed).buttonStyle(.borderedProminent).tint(.green)
+                    }
+                }
             case .bag:
-                Text("Túi đồ (\(inventory.count)/40)").font(.headline)
+                Text("Túi đồ" (\(inventory.count)/40)").font(.headline)
                 if inventory.isEmpty {
                     Text("Chưa có vật phẩm. Hãy đánh quái để nhận chiến lợi phẩm.")
                 } else {
