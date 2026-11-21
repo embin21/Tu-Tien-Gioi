@@ -22,6 +22,7 @@ struct GameHomeView: View {
     @State private var intelligence = 0
     @State private var potentialPoints = 50
     @State private var selectedStage = 1
+    @State private var isBossFight = false
     @State private var currency = 0
     @State private var lootClaimed = false
     @State private var inventory: [String] = []
@@ -91,17 +92,17 @@ struct GameHomeView: View {
                     }
                     HStack(spacing: 8) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(monsterTitle.uppercased()).font(.caption.bold())
+                            Text((isBossFight ? bossTitle : monsterTitle).uppercased()).font(.caption.bold())
                             Text("\(selectedRegion) • \(combatMessage)").font(.system(size: 9))
-                            meter("HP", value: monsterHP / 120, color: .orange)
+                            meter("HP", value: monsterHP / monsterMaxHP, color: isBossFight ? .red : .orange)
                         }
                         Spacer()
                         if monsterHP <= 0 {
                             VStack(alignment: .trailing, spacing: 5) {
                                 if !lootClaimed {
                                     Button("Nhặt linh thạch +10") {
-                                        currency += stageCurrency
-                                        inventory.append(stageDropName)
+                                        currency += stageCurrency * (isBossFight ? 5 : 1)
+                                        inventory.append(isBossFight ? bossDropName : stageDropName)
                                         lootClaimed = true
                                         combatMessage = "Nhặt được 10 linh thạch và Hỏa linh châu"
                                     }.font(.caption.bold()).padding(7).background(.cyan.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 8))
@@ -170,8 +171,8 @@ struct GameHomeView: View {
                         attackMonster(damage: 18 + Double(powerScore) * 0.08 + companionPower * 0.25, manaCost: 0)
                         if monsterHP > 0 { combatMessage = "Tự động farm • " + combatMessage }
                     } else if !lootClaimed {
-                        currency += 10
-                        inventory.append("Hỏa linh châu")
+                        currency += stageCurrency * (isBossFight ? 5 : 1)
+                        inventory.append(isBossFight ? bossDropName : stageDropName)
                         lootClaimed = true
                         combatMessage = "Nhặt ải \(selectedStage): +\(stageCurrency) linh thạch, \(stageDropName)"
                     } else { respawnMonster() }
@@ -233,7 +234,7 @@ struct GameHomeView: View {
             wings: wings, pet: pet, artifact: artifact, outfit: outfit,
             headwear: headwear, aura: aura,
             strength: strength, agility: agility, vitality: vitality,
-            intelligence: intelligence, potentialPoints: potentialPoints, selectedStage: selectedStage
+            intelligence: intelligence, potentialPoints: potentialPoints, selectedStage: selectedStage, isBossFight: isBossFight
         )
         do {
             let data = try JSONEncoder().encode(save)
@@ -257,9 +258,10 @@ struct GameHomeView: View {
         intelligence = max(0, save.intelligence ?? 0)
         potentialPoints = max(0, save.potentialPoints ?? 50)
         selectedStage = min(10, max(1, save.selectedStage ?? 1))
+        isBossFight = save.isBossFight ?? false
         hp = min(maxHP, max(0, save.hp))
         mana = min(maxMana, max(0, save.mana))
-        monsterHP = min(stageMonsterHP, max(0, save.monsterHP))
+        monsterHP = min(monsterMaxHP, max(0, save.monsterHP))
         exp = max(0, save.exp)
         level = max(1, save.level)
         currency = max(0, save.currency)
@@ -374,7 +376,7 @@ struct GameHomeView: View {
         monsterHP = max(0, monsterHP - finalDamage)
         if monsterHP == 0 {
             lootClaimed = false
-            let stageExp = 30 + (selectedStage - 1) * 15
+            let stageExp = (30 + (selectedStage - 1) * 15) * (isBossFight ? 5 : 1)
             exp += stageExp
             questKills += 1
             combatMessage = "Hạ quái ải \(selectedStage)! +\(stageExp) EXP"
@@ -388,6 +390,10 @@ struct GameHomeView: View {
             combatMessage = "Gây \\(Int(finalDamage)) sát thương"
         }
     }
+
+    var bossTitle: String { ["古代炎魔", "冰霜龍王", "九幽魔君", "天劍尊者", "混沌仙帝"][(selectedStage - 1) / 2 % 5] }
+    var monsterMaxHP: Double { isBossFight ? stageMonsterHP * 5 : stageMonsterHP }
+    var bossDropName: String { ["炎魔核心", "冰龍精魄", "九幽魔核", "天劍碎片", "混沌仙晶"][(selectedStage - 1) / 2 % 5] }
 
     var stageMonsterHP: Double { 120 + Double(selectedStage - 1) * 60 }
     var stageCurrency: Int { 10 + (selectedStage - 1) * 5 }
@@ -466,10 +472,28 @@ struct GameHomeView: View {
                     .disabled(exp < 100 || realmIndex >= realms.count - 1)
                     .padding(9).background(.purple.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 9))
             case .stages:
-                Text("Chọn ải • Quái mạnh dần, phần thưởng tăng theo cấp").font(.caption).foregroundStyle(.secondary)
+                Text("Chọn ải hoặc khiêu chiến BOSS • Boss có 5 lần HP và thưởng hiếm").font(.caption).foregroundStyle(.secondary)
+                Button {
+                    isBossFight = true
+                    monsterHP = stageMonsterHP * 5
+                    lootClaimed = false
+                    combatMessage = "Khiêu chiến \\(bossTitle)! "
+                    panel = nil
+                } label: {
+                    HStack {
+                        Image(systemName: "crown.fill").foregroundStyle(.yellow)
+                        VStack(alignment: .leading) {
+                            Text("BOSS ẢI \\(selectedStage): \\(bossTitle)").bold()
+                            Text("HP \\(Int(stageMonsterHP * 5)) • Thưởng EXP và vật phẩm hiếm ×5").font(.caption2).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text("ĐẤU").bold().foregroundStyle(.orange)
+                    }.padding(10).background(.red.opacity(0.2)).clipShape(RoundedRectangle(cornerRadius: 10))
+                }.buttonStyle(.plain)
                 ForEach(1...10, id: \.self) { stage in
                     Button {
                         selectedStage = stage
+                        isBossFight = false
                         monsterHP = stageMonsterHP
                         lootClaimed = false
                         combatMessage = "Bắt đầu Ải \(stage) • HP quái \(Int(stageMonsterHP))"
