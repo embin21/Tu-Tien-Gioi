@@ -142,8 +142,9 @@ struct GameHomeView: View {
             if !isRestoringSave { saveGame() }
         }
         .onChange(of: monsterHitPulse) { _ in
-            hp = max(0, hp - 8)
-            combatMessage = "Xích Giác phản công! -8 HP"
+            let incomingDamage = profile.sect == "Võ Tông" ? 5.0 : 8.0
+            hp = max(0, hp - incomingDamage)
+            combatMessage = "Quái phản công! -\\(Int(incomingDamage)) HP"
         }
         .preferredColorScheme(.dark)
     }
@@ -256,12 +257,24 @@ struct GameHomeView: View {
         return (item.0, item.1, item.2, item.3)
     }
 
+    var classPassive: (title: String, detail: String) {
+        switch profile.sect {
+        case "Kiếm Tông": return ("Kiếm Ý", "+12% sát thương kỹ năng")
+        case "Linh Tông": return ("Linh Mạch", "Giảm 20% MP tiêu hao")
+        case "Võ Tông": return ("Kim Cang Thể", "Giảm 3 sát thương nhận vào")
+        default: return ("Ảnh Bộ", "+10% sát thương kỹ năng")
+        }
+    }
+
     func attackMonster(damage: Double, manaCost: Double) {
         guard monsterHP > 0 else { combatMessage = "Quái đã bị đánh bại"; return }
-        guard mana >= manaCost else { combatMessage = "Không đủ MP"; return }
-        mana -= manaCost
+        let adjustedManaCost = profile.sect == "Linh Tông" ? manaCost * 0.8 : manaCost
+        guard mana >= adjustedManaCost else { combatMessage = "Không đủ MP"; return }
+        mana -= adjustedManaCost
+        let multiplier = profile.sect == "Kiếm Tông" ? 1.12 : (profile.sect == "Ảnh Tông" ? 1.10 : 1.0)
+        let finalDamage = damage * multiplier
         attackPulse += 1
-        monsterHP = max(0, monsterHP - damage)
+        monsterHP = max(0, monsterHP - finalDamage)
         if monsterHP == 0 {
             lootClaimed = false
             exp += 30
@@ -270,10 +283,10 @@ struct GameHomeView: View {
             if exp >= level * 100 {
                 exp -= level * 100
                 level += 1
-                combatMessage = "Lên cấp! Lv.\(level)"
+                combatMessage = "Lên cấp! Lv.\\(level)"
             }
         } else {
-            combatMessage = "Gây \(Int(damage)) sát thương"
+            combatMessage = "Gây \\(Int(finalDamage)) sát thương"
         }
     }
 
@@ -325,6 +338,8 @@ struct GameHomeView: View {
             case .character:
                 Text("⚔️  \(profile.name)").font(.title3.bold())
                 Text("Môn phái: \(profile.sect)  •  Giới tính: \(profile.gender)")
+                Text("Nội tại: \\(classPassive.title)").font(.headline).foregroundStyle(.cyan)
+                Text(classPassive.detail).font(.caption).foregroundStyle(.secondary)
                 Text("Cấp độ: \(level)  •  EXP: \(exp)/\(level * 100)")
                 Text("Cảnh giới: \(realms[realmIndex])")
                 Button("Đột phá cảnh giới (100 EXP)") { breakthrough() }
